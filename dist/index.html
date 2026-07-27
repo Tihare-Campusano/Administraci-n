@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aplicación de administración de ventas de comida, finanzas, pedidos activos e historial.">
+  <title>FoodAdmin | Control de Ventas de Comida</title>
+  <script type="module" crossorigin src="/assets/index-BfzliFeD.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BJ7Yc1x9.css">
+</head>
+<body>
+
+  <!-- Navigation Sidebar -->
+  <aside>
+    <div class="logo-container">
+      <div class="logo-icon">🧁</div>
+      <div class="logo-text">FoodAdmin</div>
+    </div>
+    
+    <nav>
+      <ul class="nav-links">
+        <li>
+          <a class="nav-link active" data-tab="dashboard">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-tab="active-orders">
+            <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            Pedidos Activos
+            <span class="badge" id="active-orders-badge" style="display: none;">0</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-tab="sales-history">
+            <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Historial
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-tab="catalog">
+            <svg viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            Catálogo
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-tab="clients">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8zm14-2v2m0 0v2m0-2h-2m2 0h2"/></svg>
+            Clientes
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-tab="backup">
+            <svg viewBox="0 0 24 24"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            Respaldo / Ajustes
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-tab="documentation">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            Documentación
+          </a>
+        </li>
+      </ul>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <span>FoodAdmin v1.0</span>
+      <span>Base de datos local activa</span>
+    </div>
+  </aside>
+
+  <!-- Main Content Panel -->
+  <main>
+    
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- 1. DASHBOARD VIEW -->
+    <section id="dashboard" class="tab-content active">
+      <header>
+        <div class="header-title">
+          <h1>Panel de Control</h1>
+          <p>Resumen de tus ventas y rendimiento hoy</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="dashboard-new-order-btn">
+            <span>+ Nuevo Pedido</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Dashboard Stats Grid -->
+      <div class="stats-grid">
+        <div class="glass-card stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Ganado Hoy</span>
+            <span class="stat-value" id="stats-income-today">$0</span>
+          </div>
+          <div class="stat-icon green">💰</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Ventas del Mes</span>
+            <span class="stat-value" id="stats-income-month">$0</span>
+          </div>
+          <div class="stat-icon green">📈</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Pedidos Activos</span>
+            <span class="stat-value" id="stats-orders-active">0</span>
+          </div>
+          <div class="stat-icon orange">🕒</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Pendiente de Cobro</span>
+            <span class="stat-value text-warning" id="stats-payments-pending">$0</span>
+          </div>
+          <div class="stat-icon blue">💳</div>
+        </div>
+      </div>
+
+      <!-- Charts and Top Products -->
+      <div class="dashboard-grid">
+        <!-- Sales Chart -->
+        <div class="glass-card chart-container">
+          <div class="card-header">
+            <h2 class="card-title">Ventas de la Semana</h2>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="salesChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Products list -->
+        <div class="glass-card top-products-card">
+          <div class="card-header">
+            <h2 class="card-title">Productos Estrella</h2>
+            <span class="catalog-card-badge">Más vendidos</span>
+          </div>
+          <div class="top-products-list" id="top-products-list">
+            <!-- Dynamically populated rank list -->
+            <div class="empty-state" style="padding: 1rem;">
+              <p>No hay ventas registradas aún para calcular productos estrella.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ACTIVE ORDERS VIEW -->
+    <section id="active-orders" class="tab-content">
+      <header>
+        <div class="header-title">
+          <h1>Pedidos Activos</h1>
+          <p>Pedidos pendientes de preparación o entrega</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="orders-new-order-btn">
+            <span>+ Nuevo Pedido</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="orders-grid" id="active-orders-grid">
+        <!-- Dynamically populated active orders cards -->
+      </div>
+    </section>
+
+    <!-- 3. SALES HISTORY VIEW -->
+    <section id="sales-history" class="tab-content">
+      <header>
+        <div class="header-title">
+          <h1>Historial de Ventas</h1>
+          <p>Consulta, busca y edita ventas anteriores</p>
+        </div>
+      </header>
+
+      <!-- Table Filters -->
+      <div class="glass-card table-controls">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" class="search-input" id="history-search" placeholder="Buscar por cliente o número de pedido...">
+        </div>
+        <div class="filter-group">
+          <select class="select-input" id="filter-payment">
+            <option value="all">Todos los Pagos</option>
+            <option value="paid">Pagados</option>
+            <option value="unpaid">Pendientes de Pago</option>
+          </select>
+          <select class="select-input" id="filter-date">
+            <option value="all">Todo el Historial</option>
+            <option value="today">Hoy</option>
+            <option value="week">Esta Semana</option>
+            <option value="month">Este Mes</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Sales Table -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Fecha/Hora</th>
+              <th>Cliente</th>
+              <th>Detalle del Pedido</th>
+              <th>Total</th>
+              <th>Estado Cobro</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body">
+            <!-- Dynamically populated table rows -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4. CATALOG (PRODUCTS) VIEW -->
+    <section id="catalog" class="tab-content">
+      <header>
+        <div class="header-title">
+          <h1>Catálogo de Productos</h1>
+          <p>Agrega, edita y administra los precios de tu menú</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="catalog-new-product-btn">
+            <span>+ Nuevo Producto</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="catalog-grid" id="catalog-grid">
+        <!-- Dynamically populated products cards -->
+      </div>
+    </section>
+
+    <!-- 5. CLIENTS VIEW -->
+    <section id="clients" class="tab-content">
+      <header>
+        <div class="header-title">
+          <h1>Directorio de Clientes</h1>
+          <p>Gestiona los datos de tus clientes para agilizar la toma de pedidos</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="clients-new-client-btn">
+            <span>+ Nuevo Cliente</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="catalog-grid" id="clients-grid">
+        <!-- Dynamically populated clients cards -->
+      </div>
+    </section>
+
+    <!-- 6. BACKUP & SETTINGS VIEW -->
+    <section id="backup" class="tab-content">
+      <header>
+        <div class="header-title">
+          <h1>Respaldo y Ajustes</h1>
+          <p>Administra la base de datos local de la aplicación</p>
+        </div>
+      </header>
+
+      <div class="stats-grid">
+        <!-- Export Card -->
+        <div class="glass-card">
+          <h2 class="card-title" style="margin-bottom: 10px;">Exportar Datos</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Descarga una copia de seguridad de toda tu información (productos, clientes y ventas) en un archivo JSON local en tu computadora.</p>
+          <button class="btn btn-primary" id="btn-export-db">Descargar Respaldo JSON</button>
+        </div>
+        
+        <!-- Import Card -->
+        <div class="glass-card">
+          <h2 class="card-title" style="margin-bottom: 10px;">Importar Datos</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Restaura una copia de seguridad JSON previamente descargada. <strong>Atención: esto reemplazará los datos actuales.</strong></p>
+          <input type="file" id="import-file-input" accept=".json" style="display: none;">
+          <button class="btn btn-secondary" id="btn-import-db">Seleccionar Archivo e Importar</button>
+        </div>
+
+        <!-- Danger Zone Card -->
+        <div class="glass-card" style="border-color: rgba(239, 68, 68, 0.2);">
+          <h2 class="card-title text-danger" style="margin-bottom: 10px;">Zona de Peligro</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Borra permanentemente toda la base de datos (ventas, catálogo de productos y base de clientes). Esta acción no se puede deshacer.</p>
+          <button class="btn btn-danger" id="btn-reset-db">Formatear Aplicación</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. DOCUMENTATION VIEW -->
+    <section id="documentation" class="tab-content">
+      <header>
+        <div class="header-title">
+          <h1>Documentación del Sistema</h1>
+          <p>Manual de usuario, ficha técnica y arquitectura del software</p>
+        </div>
+      </header>
+
+      <div class="glass-card" style="display: flex; gap: 2rem; padding: 2rem; flex-wrap: wrap;">
+        
+        <!-- Sticky Navigation Index -->
+        <div style="width: 220px; border-right: 1px solid var(--border-glass); padding: 0 1.5rem 0 0; display: flex; flex-direction: column; gap: 10px;">
+          <a href="#doc-manual" style="color: var(--accent); font-weight: 600; text-decoration: none; font-size: 0.95rem;">📖 Manual de Usuario</a>
+          <a href="#doc-stack" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">🛠️ Ficha Técnica</a>
+          <a href="#doc-arquitectura" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">📐 Arquitectura</a>
+          <a href="#doc-run" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">💻 Ejecución Local</a>
+        </div>
+
+        <!-- Documentation Content -->
+        <div style="flex-grow: 1; flex-basis: 0; min-width: 300px; max-height: 60vh; overflow-y: auto; padding-right: 1rem; display: flex; flex-direction: column; gap: 2.5rem; line-height: 1.6;">
+          
+          <!-- Section 1 -->
+          <div id="doc-manual">
+            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; color: var(--accent);">📖 Manual del Usuario</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">FoodAdmin es una herramienta unificada para registrar tus ventas diarias, pedidos y catálogo de forma offline y local en tu PC.</p>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 8px;">
+              <li><strong>Dashboard:</strong> Visualiza en tiempo real los ingresos acumulados diarios/mensuales, cobros pendientes y un gráfico semanal de ventas, junto al listado de platos más vendidos.</li>
+              <li><strong>Pedidos Activos:</strong> Tablero tipo checklist (FIFO) para pedidos en preparación. Haz clic en "Listo ✅" para moverlos al historial, o "Cobrar/Deber" para alternar el cobro al instante.</li>
+              <li><strong>Historial de Ventas:</strong> Tabla interactiva de ventas con buscador rápido de clientes y filtros avanzados por fecha (Hoy, Semana, Mes) o estado de cobro.</li>
+              <li><strong>Catálogo y Clientes:</strong> Registra de forma sencilla platos de comida, precios y datos/direcciones de clientes para agilizar la toma de nuevos pedidos.</li>
+              <li><strong>Ajustes y Respaldos:</strong> Permite descargar copias de seguridad de IndexedDB en formato JSON y restaurarlas en cualquier momento.</li>
+            </ul>
+          </div>
+
+          <!-- Section 2 -->
+          <div id="doc-stack">
+            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; color: var(--accent);">🛠️ Ficha Técnica y Herramientas</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">El sistema está desarrollado exclusivamente sobre un stack offline moderno y de alto rendimiento visual:</p>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 8px;">
+              <li><strong>Vite:</strong> Servidor de empaquetado de alta velocidad para módulos ESM locales.</li>
+              <li><strong>TypeScript:</strong> Tipado estricto para mitigar fallos de referencia y asegurar escalabilidad.</li>
+              <li><strong>IndexedDB:</strong> Base de datos relacional y de almacenamiento local persistente del navegador, resistente a reinicios y cierres de sesión.</li>
+              <li><strong>Chart.js:</strong> Renderizado canvas interactivo del gráfico histórico en el Dashboard.</li>
+              <li><strong>Vanilla CSS3:</strong> Diseño premium glassmorphism adaptado para monitores de PC sin recargar dependencias.</li>
+            </ul>
+          </div>
+
+          <!-- Section 3 -->
+          <div id="doc-arquitectura">
+            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; color: var(--accent);">📐 Arquitectura del Software</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">La aplicación sigue una arquitectura modular en capas basada en estándares corporativos:</p>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 8px;">
+              <li><strong>Models (Modelo de Datos):</strong> Estructuras de tipos puras (Product, Customer, Order, Expense).</li>
+              <li><strong>Repositories (Acceso a Datos):</strong> Capa encargada exclusivamente de consultar, guardar y eliminar registros en IndexedDB.</li>
+              <li><strong>Services (Lógica Comercial):</strong> Capa de negocio que procesa cálculos matemáticos financieros (ej. ganancias netas descontando egresos y costos) y validaciones complejas.</li>
+              <li><strong>Pages / Components (Vistas):</strong> Controladores de interfaz que enlazan eventos del DOM y renderizan los componentes visuales.</li>
+            </ul>
+          </div>
+
+          <!-- Section 4 -->
+          <div id="doc-run">
+            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; color: var(--accent);">💻 Ejecución local y Portable</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Al ser una aplicación de escritorio local, su ciclo de ejecución es sencillo y controlado:</p>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 8px;">
+              <li>El lanzador de un clic <strong>Iniciar_FoodAdmin.bat</strong> inicia el servidor en segundo plano y abre la interfaz en una ventana de escritorio independiente (sin barra de navegación).</li>
+              <li>Toda la base de datos corre <strong>100% offline</strong> de manera local en IndexedDB. No existe backend remoto, por lo que tus datos son privados y permanecen únicamente en tu disco duro.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- A. ORDER MODAL (TOMA DE PEDIDO) -->
+  <div id="modal-order" class="modal-overlay">
+    <div class="glass-card modal-card" style="max-width: 850px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="order-modal-title">Tomar Nuevo Pedido</h2>
+        <button class="modal-close" id="close-order-modal">&times;</button>
+      </div>
+      <form id="order-form">
+        <input type="hidden" id="order-id">
+        <div class="order-builder-layout">
+          
+          <!-- Left side: Product List -->
+          <div>
+            <div class="form-group">
+              <label>Seleccionar Productos</label>
+              <div class="builder-products-section" id="order-products-selector">
+                <!-- Dynamically populated products list with quantity controls -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right side: Client & Totals Summary -->
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Client Selection -->
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="order-client-select">Cliente</label>
+                <a style="font-size: 0.8rem; color: var(--accent); cursor: pointer; font-weight: 600;" id="link-quick-add-client">+ Crear Cliente</a>
+              </div>
+              <select class="select-input" id="order-client-select" required style="width: 100%;">
+                <option value="" disabled selected>Selecciona un cliente...</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <!-- Delivery & Payment status -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="order-delivery-fee">Envío / Delivery ($)</label>
+                <input type="number" class="form-input" id="order-delivery-fee" min="0" value="0" step="100">
+              </div>
+              <div class="form-group">
+                <label for="order-payment-status">Pago Inicial</label>
+                <select class="select-input" id="order-payment-status" style="width: 100%;">
+                  <option value="unpaid">Pendiente</option>
+                  <option value="paid">Pagado</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="order-notes">Notas / Dirección / Hora Especial</label>
+              <input type="text" class="form-input" id="order-notes" placeholder="Ej: Dedicatoria 'Felicidades', Entregar a las 16:00...">
+            </div>
+
+            <!-- Visual checkout summary -->
+            <div class="builder-summary-section">
+              <div class="builder-summary-title">Resumen de Cuenta</div>
+              <div class="builder-summary-list" id="builder-summary-list">
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin: auto;">No has seleccionado productos.</p>
+              </div>
+              <div class="builder-totals">
+                <div class="builder-total-row">
+                  <span>Subtotal</span>
+                  <span id="builder-subtotal">$0</span>
+                </div>
+                <div class="builder-total-row">
+                  <span>Envío</span>
+                  <span id="builder-delivery">$0</span>
+                </div>
+                <div class="builder-total-row grand-total">
+                  <span>Total</span>
+                  <span id="builder-grand-total">$0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-order">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-order">Confirmar Pedido</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- B. PRODUCT MODAL -->
+  <div id="modal-product" class="modal-overlay">
+    <div class="glass-card modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title" id="product-modal-title">Agregar Producto</h2>
+        <button class="modal-close" id="close-product-modal">&times;</button>
+      </div>
+      <form id="product-form">
+        <input type="hidden" id="product-id">
+        
+        <div class="form-group">
+          <label for="product-name">Nombre del Producto</label>
+          <input type="text" class="form-input" id="product-name" required placeholder="Ej: Brownie Fudge de Chocolate">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="product-price">Precio ($)</label>
+            <input type="number" class="form-input" id="product-price" required min="0" placeholder="Ej: 2000">
+          </div>
+          <div class="form-group">
+            <label for="product-category">Categoría</label>
+            <input type="text" class="form-input" id="product-category" placeholder="Ej: Brownies, Cupcakes, Queques">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="product-description">Descripción / Ingredientes</label>
+          <textarea class="form-input" id="product-description" rows="3" placeholder="Ej: Chocolate belga húmedo, trozos de nueces picadas..." style="resize: vertical;"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-product">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- C. CLIENT MODAL -->
+  <div id="modal-client" class="modal-overlay">
+    <div class="glass-card modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title" id="client-modal-title">Agregar Cliente</h2>
+        <button class="modal-close" id="close-client-modal">&times;</button>
+      </div>
+      <form id="client-form">
+        <input type="hidden" id="client-id">
+        
+        <div class="form-group">
+          <label for="client-name">Nombre del Cliente</label>
+          <input type="text" class="form-input" id="client-name" required placeholder="Ej: Juan Pérez">
+        </div>
+
+        <div class="form-group">
+          <label for="client-phone">Teléfono / Celular</label>
+          <input type="text" class="form-input" id="client-phone" placeholder="Ej: +569 1234 5678">
+        </div>
+
+        <div class="form-group">
+          <label for="client-notes">Dirección de Entrega / Notas Especiales</label>
+          <textarea class="form-input" id="client-notes" rows="3" placeholder="Ej: Av. Principal 123, Depto 402. Tocar timbre portón azul..." style="resize: vertical;"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-client">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</body>
+</html>

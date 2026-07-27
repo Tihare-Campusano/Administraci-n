@@ -1,0 +1,140 @@
+import { DashboardPage } from './pages/DashboardPage';
+import { ActiveOrdersPage } from './pages/ActiveOrdersPage';
+import { HistoryPage } from './pages/HistoryPage';
+import { CatalogPage } from './pages/CatalogPage';
+import { ClientsPage } from './pages/ClientsPage';
+import { BackupPage } from './pages/BackupPage';
+import { OrderModal } from './components/OrderModal';
+import { ProductRepository } from './repositories/ProductRepository';
+import { CustomerRepository } from './repositories/CustomerRepository';
+import { showToast } from './components/Toast';
+
+// Global Instances
+const dashboardPage = new DashboardPage();
+const activeOrdersPage = new ActiveOrdersPage();
+const historyPage = new HistoryPage();
+const catalogPage = new CatalogPage();
+const clientsPage = new ClientsPage();
+const backupPage = new BackupPage();
+const orderModal = new OrderModal();
+
+let currentTab = 'dashboard';
+
+function setupTabNavigation() {
+  const links = document.querySelectorAll('.nav-link');
+  links.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tab = link.getAttribute('data-tab') || 'dashboard';
+      switchTab(tab);
+    });
+  });
+}
+
+function switchTab(tabId: string) {
+  currentTab = tabId;
+  
+  document.querySelectorAll('.nav-link').forEach(link => {
+    if (link.getAttribute('data-tab') === tabId) link.classList.add('active');
+    else link.classList.remove('active');
+  });
+
+  document.querySelectorAll('.tab-content').forEach(content => {
+    if (content.id === tabId) content.classList.add('active');
+    else content.classList.remove('active');
+  });
+
+  loadTabData(tabId);
+}
+
+function loadTabData(tabId: string) {
+  updateBadge();
+  switch (tabId) {
+    case 'dashboard':
+      dashboardPage.load();
+      break;
+    case 'active-orders':
+      activeOrdersPage.load();
+      break;
+    case 'sales-history':
+      historyPage.load();
+      break;
+    case 'catalog':
+      catalogPage.load();
+      break;
+    case 'clients':
+      clientsPage.load();
+      break;
+    case 'documentation':
+      break;
+  }
+}
+
+async function updateBadge() {
+  const orderRepo = new (await import('./repositories/OrderRepository')).OrderRepository();
+  try {
+    const orders = await orderRepo.getAll();
+    const activeCount = orders.filter(o => o.status === 'pending').length;
+    const badge = document.getElementById('active-orders-badge');
+    if (badge) {
+      badge.textContent = activeCount.toString();
+      badge.style.display = activeCount > 0 ? 'inline-block' : 'none';
+    }
+  } catch (err) {
+    console.error('Badge update error', err);
+  }
+}
+
+async function seedDatabaseIfEmpty() {
+  const prodRepo = new ProductRepository();
+  const custRepo = new CustomerRepository();
+
+  const products = await prodRepo.getAll();
+  const customers = await custRepo.getAll();
+
+  if (products.length === 0) {
+    const dummyProducts = [
+      { id: 'prod_seed_1', name: 'Brownie de Chocolate Fudge', price: 2000, cost: 800, category: 'Brownies', available: true, description: 'Brownie húmedo con chocolate premium y trozos de nuez.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'prod_seed_2', name: 'Queque Zanahoria-Nuez', price: 4500, cost: 1800, category: 'Queques', available: true, description: 'Esponjoso queque de zanahoria, nueces y frosting de queso crema.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'prod_seed_3', name: 'Cupcake de Red Velvet', price: 1800, cost: 600, category: 'Cupcakes', available: true, description: 'Cupcake clásico aterciopelado con crema batida de vainilla.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'prod_seed_4', name: 'Caja de 6 Mini Donitas', price: 3500, cost: 1200, category: 'Donas', available: true, description: 'Seis mini donas horneadas con cobertura glaseada de colores.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+    ];
+    for (const p of dummyProducts) await prodRepo.save(p);
+  }
+
+  if (customers.length === 0) {
+    const dummyCustomers = [
+      { id: 'cli_seed_1', name: 'Claudio Martínez', phone: '+569 8765 4321', address: 'Los Aromos 442', notes: 'Portón de madera.', createdAt: new Date().toISOString() },
+      { id: 'cli_seed_2', name: 'Tihare Campusano', phone: '+569 9876 5432', address: 'Av. Providencia 1202', notes: 'Dejar en conserjería.', createdAt: new Date().toISOString() }
+    ];
+    for (const c of dummyCustomers) await custRepo.save(c);
+  }
+}
+
+async function init() {
+  try {
+    await seedDatabaseIfEmpty();
+    
+    // Initialize components and pages
+    dashboardPage.init(() => orderModal.open());
+    activeOrdersPage.init((id) => orderModal.open(id), () => loadTabData(currentTab));
+    historyPage.init(() => loadTabData(currentTab));
+    catalogPage.init();
+    clientsPage.init();
+    
+    // Link quick add client inside order modal
+    document.getElementById('link-quick-add-client')?.addEventListener('click', () => {
+      orderModal.quickAddClientTrigger(clientsPage);
+    });
+
+    orderModal.init(() => loadTabData(currentTab));
+    backupPage.init(() => loadTabData(currentTab));
+    
+    setupTabNavigation();
+    loadTabData('dashboard');
+  } catch (err) {
+    showToast('Fallo al iniciar base de datos', 'danger');
+  }
+}
+
+window.addEventListener('DOMContentLoaded', init);

@@ -1,0 +1,22 @@
+{
+  "name": "foodadmin",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 8000",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.1",
+    "dayjs": "^1.11.10",
+    "exceljs": "^4.4.0",
+    "jspdf": "^2.5.1",
+    "lucide": "^0.321.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.0.12"
+  }
+}
