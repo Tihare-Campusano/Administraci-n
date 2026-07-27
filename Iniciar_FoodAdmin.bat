@@ -1,8 +1,8 @@
 @echo off
-title FoodAdmin - Cargando...
+title FoodAdmin - Escritorio
 echo ==================================================
-echo   Iniciando FoodAdmin de Escritorio para PC...
+echo   Iniciando FoodAdmin de Escritorio...
 echo ==================================================
 cd /d "%~dp0"
-python server.py
-pause
+set "PATH=C:\Program Files\nodejs;%PATH%"
+call npm run desktop

@@ -8,6 +8,8 @@ import { OrderModal } from './components/OrderModal';
 import { ProductRepository } from './repositories/ProductRepository';
 import { CustomerRepository } from './repositories/CustomerRepository';
 import { showToast } from './components/Toast';
+import { PinLogin } from './components/PinLogin';
+import { SecurityService } from './services/SecurityService';
 
 // Global Instances
 const dashboardPage = new DashboardPage();
@@ -17,6 +19,8 @@ const catalogPage = new CatalogPage();
 const clientsPage = new ClientsPage();
 const backupPage = new BackupPage();
 const orderModal = new OrderModal();
+const pinLogin = new PinLogin();
+const securityService = new SecurityService();
 
 let currentTab = 'dashboard';
 
@@ -128,7 +132,23 @@ async function init() {
     });
 
     orderModal.init(() => loadTabData(currentTab));
-    backupPage.init(() => loadTabData(currentTab));
+    pinLogin.init(() => {
+      backupPage.updateSecurityStatusUI();
+    });
+    
+    backupPage.init(() => loadTabData(currentTab), pinLogin);
+    
+    // Enlazar botón de bloqueo manual del sidebar
+    document.getElementById('btn-lock-app')?.addEventListener('click', () => {
+      securityService.lockSession();
+      pinLogin.show('lock');
+    });
+
+    // Validar seguridad al iniciar
+    const isSecurityActive = await securityService.isSecurityEnabled();
+    if (isSecurityActive) {
+      pinLogin.show('lock');
+    }
     
     setupTabNavigation();
     loadTabData('dashboard');

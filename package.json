@@ -3,10 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "main": "main.js",
   "scripts": {
     "dev": "vite --port 8000",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "desktop": "npm run build && electron ."
   },
   "dependencies": {
     "chart.js": "^4.4.1",
@@ -16,6 +18,7 @@
     "lucide": "^0.321.0"
   },
   "devDependencies": {
+    "electron": "^43.2.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.12"
   }

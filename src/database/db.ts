@@ -1,5 +1,5 @@
 const DB_NAME = 'FoodAdminDB';
-const DB_VERSION = 2; // Incremented version since we restructured stores to match the models exactly
+const DB_VERSION = 3; // Incremented version to add settings store
 
 export function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -31,6 +31,10 @@ export function openDB(): Promise<IDBDatabase> {
 
       if (!db.objectStoreNames.contains('expenses')) {
         db.createObjectStore('expenses', { keyPath: 'id' });
+      }
+
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings', { keyPath: 'key' });
       }
     };
   });
