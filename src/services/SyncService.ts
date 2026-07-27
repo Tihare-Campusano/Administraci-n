@@ -49,16 +49,35 @@ export class SyncService {
     }
   }
 
+  async getHostInfo(): Promise<{ host_ip: string; access_url: string } | null> {
+    try {
+      const res = await fetch('http://localhost:8080/api/info');
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn('No se pudo conectar al servidor de sincronización local para obtener información:', e);
+    }
+    return null;
+  }
+
   async syncNow(): Promise<void> {
     const enabled = await this.isSyncEnabled();
     if (!enabled) return;
 
     const role = await this.getSyncRole();
-    const hostIp = await this.getSyncHostIp();
+    let hostIp = await this.getSyncHostIp();
     
     // Determine API Endpoint
     let baseUrl = 'http://localhost:8080';
     if (role === 'client') {
+      if (!hostIp) {
+        // Autodetectar IP a partir de la barra de direcciones del navegador
+        const currentHostname = window.location.hostname;
+        if (currentHostname && currentHostname !== 'localhost' && currentHostname !== '127.0.0.1' && currentHostname !== '::1' && currentHostname !== '') {
+          hostIp = currentHostname;
+        }
+      }
       if (!hostIp) {
         throw new Error('La dirección IP del Host no está configurada.');
       }

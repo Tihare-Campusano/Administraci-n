@@ -17,6 +17,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
+    icon: path.join(__dirname, 'src', 'assets', 'gato_chef.ico'),
     // Estilo premium: ventana integrada limpia
     title: 'FoodAdmin',
     autoHideMenuBar: true,

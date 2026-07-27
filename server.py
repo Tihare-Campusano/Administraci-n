@@ -3,10 +3,23 @@ import os
 import sys
 import json
 import threading
+import socket
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # File where sync data will be saved on the Host PC
 SYNC_FILE = 'sync_db.json'
+
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Connecting to public DNS triggers OS routing without sending any packets
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        # Fallback to localhost if network interface is not active
+        return "127.0.0.1"
 
 def merge_items(local_items, incoming_items):
     merged = {item['id']: item for item in local_items if isinstance(item, dict) and 'id' in item}
@@ -58,6 +71,14 @@ class SyncHTTPRequestHandler(BaseHTTPRequestHandler):
                     print(f"Error al leer sync_db.json: {e}")
                     
             self.wfile.write(json.dumps(data).encode('utf-8'))
+        elif self.path == '/api/info':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            
+            ip = get_local_ip()
+            info = {"host_ip": ip, "access_url": f"http://{ip}:8000"}
+            self.wfile.write(json.dumps(info).encode('utf-8'))
         else:
             self.send_response(404)
             self.end_headers()
@@ -118,8 +139,12 @@ def start_dev_server():
     if script_dir:
         os.chdir(script_dir)
         
+    local_ip = get_local_ip()
     print("==================================================")
     print("  FoodAdmin - Iniciando Servidor de Desarrollo   ")
+    print("==================================================")
+    print(f"  Acceso Local (Esta PC): http://localhost:8000")
+    print(f"  Acceso en Red (Celular/Otra PC): http://{local_ip}:8000")
     print("==================================================")
     print("Iniciando Vite + TypeScript (con soporte de red local)...")
     print("Presiona Ctrl + C en esta ventana para apagar la aplicación.")

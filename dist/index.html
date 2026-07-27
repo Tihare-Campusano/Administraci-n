@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Aplicación de administración de ventas de comida, finanzas, pedidos activos e historial.">
   <title>FoodAdmin | Control de Ventas de Comida</title>
-  <script type="module" crossorigin src="./assets/index-D5Z6PK2L.js"></script>
+  <script type="module" crossorigin src="./assets/index-BFa-lLyn.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-BLdOCsM2.css">
 </head>
 <body>
@@ -330,10 +330,22 @@
                   <input type="radio" name="sync-role" value="client" id="sync-role-client" style="accent-color: var(--accent);"> Cliente (PC de pareja)
                 </label>
               </div>
+
+              <!-- Host Info Section -->
+              <div id="sync-host-info-container" style="display: none; flex-direction: column; gap: 6px; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px dashed rgba(236, 72, 153, 0.3);">
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">Dirección de acceso para pareja/móvil:</span>
+                <strong style="font-size: 0.95rem; color: var(--accent); font-family: monospace;" id="sync-host-url">http://cargando...</strong>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">Abre esta dirección en el navegador de tu celular u otra PC conectada a la misma red WiFi.</span>
+              </div>
               
-              <div id="sync-ip-container" style="display: none; flex-direction: column; gap: 4px;">
-                <label for="sync-host-ip" style="font-size: 0.85rem; color: var(--text-secondary);">IP local del PC Host (Ej: 192.168.1.100)</label>
-                <input type="text" id="sync-host-ip" class="form-input" placeholder="Ingresa la IP de la otra computadora..." style="padding: 6px 10px; font-size: 0.9rem;">
+              <!-- Client Config Section -->
+              <div id="sync-ip-container" style="display: none; flex-direction: column; gap: 6px;">
+                <label for="sync-host-ip" style="font-size: 0.85rem; color: var(--text-secondary);">IP local del PC Host (Servidor)</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="sync-host-ip" class="form-input" placeholder="Ej: 192.168.1.100" style="padding: 6px 10px; font-size: 0.9rem; flex-grow: 1;">
+                  <button type="button" class="btn btn-secondary" id="btn-detect-ip" style="padding: 6px 12px; font-size: 0.85rem; white-space: nowrap;">Autodetectar</button>
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);" id="sync-detect-helper">Dejar vacío o presionar "Autodetectar" si abriste la app usando la red local.</span>
               </div>
             </div>
           </div>
@@ -341,6 +353,21 @@
           <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
             <button class="btn btn-primary" id="btn-sync-now" disabled>Sincronizar Ahora</button>
             <span id="sync-status-msg" style="font-size: 0.85rem; color: var(--text-secondary);">Sincronización inactiva</span>
+          </div>
+
+          <!-- Collapsible Guide -->
+          <div style="margin-top: 15px; border-top: 1px solid var(--border-glass); padding-top: 12px;">
+            <button id="btn-toggle-sync-guide" style="background: none; border: none; color: var(--accent); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 0;">
+              <span>📖 Ver Guía Rápida de Sincronización</span>
+            </button>
+            <div id="sync-quick-guide" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid var(--border-glass);">
+              <ol style="margin-left: 1.2rem; display: flex; flex-direction: column; gap: 6px; padding-left: 5px;">
+                <li><strong>PC Principal (Host):</strong> Activa la sincronización y selecciona <strong>Host</strong>. Anota la dirección de acceso que aparece en pantalla (ej: <code>http://192.168.1.15:8000</code>).</li>
+                <li><strong>Dispositivo Secundario (Cliente):</strong> Asegúrate de estar conectado al mismo WiFi. Abre el navegador e ingresa la dirección de acceso.</li>
+                <li><strong>Configurar Cliente:</strong> En el dispositivo cliente, ve a Ajustes y selecciona <strong>Cliente</strong>. Presiona <strong>Autodetectar</strong> para configurar la IP automáticamente en un clic.</li>
+                <li>¡Listo! Ambos dispositivos se mantendrán sincronizados automáticamente en segundo plano.</li>
+              </ol>
+            </div>
           </div>
         </div>
 
@@ -370,6 +397,7 @@
           <a href="#doc-stack" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">🛠️ Ficha Técnica</a>
           <a href="#doc-arquitectura" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">📐 Arquitectura</a>
           <a href="#doc-run" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">💻 Ejecución Local</a>
+          <a href="#doc-sync" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">🔄 Sincronización Local</a>
         </div>
 
         <!-- Documentation Content -->
@@ -420,6 +448,33 @@
             <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 8px;">
               <li>El lanzador de un clic <strong>Iniciar_FoodAdmin.bat</strong> inicia el servidor en segundo plano y abre la interfaz en una ventana de escritorio independiente (sin barra de navegación).</li>
               <li>Toda la base de datos corre <strong>100% offline</strong> de manera local en IndexedDB. No existe backend remoto, por lo que tus datos son privados y permanecen únicamente en tu disco duro.</li>
+            </ul>
+          </div>
+
+          <!-- Section 5 -->
+          <div id="doc-sync">
+            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; color: var(--accent);">🔄 Guía de Sincronización Local</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">FoodAdmin permite sincronizar la base de datos entre dos computadoras o con un dispositivo móvil dentro de la misma red local (WiFi o cable Ethernet). No requiere internet ni servidores externos.</p>
+            
+            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Paso 1: Configurar el equipo principal (Host)</h3>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px;">
+              <li>En la PC principal, dirígete a <strong>Respaldo y Ajustes</strong>.</li>
+              <li>Marca la casilla <strong>Habilitar Sincronización Local</strong> y selecciona el rol de <strong>Host</strong>.</li>
+              <li>El sistema mostrará una dirección URL exclusiva de tu red local (por ejemplo: <code>http://192.168.1.15:8000</code>).</li>
+            </ul>
+
+            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Paso 2: Conectar el equipo secundario (Cliente)</h3>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px;">
+              <li>Asegúrate de que la otra computadora o dispositivo (celular/tablet) esté conectado a la misma red local o WiFi.</li>
+              <li>Abre el navegador e ingresa la dirección URL anotada en el paso anterior. ¡Verás que la aplicación carga de inmediato!</li>
+            </ul>
+
+            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Paso 3: Activar la sincronización en el Cliente</h3>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px;">
+              <li>En el dispositivo cliente, ve a <strong>Respaldo y Ajustes</strong>.</li>
+              <li>Marca <strong>Habilitar Sincronización Local</strong> y selecciona el rol de <strong>Cliente</strong>.</li>
+              <li>Haz clic en el botón <strong>Autodetectar</strong>. El sistema identificará automáticamente la dirección del Host a partir de la URL del navegador.</li>
+              <li>Haz clic en <strong>Sincronizar Ahora</strong> para realizar la primera sincronización manual. ¡A partir de ahí se sincronizará solo cada 30 segundos!</li>
             </ul>
           </div>
 

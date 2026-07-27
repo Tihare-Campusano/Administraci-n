@@ -39,6 +39,13 @@ export class BackupPage {
     const hostIpInput = document.getElementById('sync-host-ip') as HTMLInputElement;
     const syncNowBtn = document.getElementById('btn-sync-now') as HTMLButtonElement;
     const statusMsg = document.getElementById('sync-status-msg');
+    
+    // Elementos nuevos
+    const hostInfoContainer = document.getElementById('sync-host-info-container');
+    const hostUrlText = document.getElementById('sync-host-url');
+    const detectIpBtn = document.getElementById('btn-detect-ip');
+    const toggleGuideBtn = document.getElementById('btn-toggle-sync-guide');
+    const quickGuideContainer = document.getElementById('sync-quick-guide');
 
     if (!enabledCheckbox || !detailsContainer || !roleHostRadio || !roleClientRadio || !ipContainer || !hostIpInput || !syncNowBtn || !statusMsg) {
       return;
@@ -57,9 +64,11 @@ export class BackupPage {
     if (role === 'client') {
       roleClientRadio.checked = true;
       ipContainer.style.display = 'flex';
+      if (hostInfoContainer) hostInfoContainer.style.display = 'none';
     } else {
       roleHostRadio.checked = true;
       ipContainer.style.display = 'none';
+      if (hostInfoContainer && enabled) hostInfoContainer.style.display = 'flex';
     }
 
     hostIpInput.value = hostIp;
@@ -69,6 +78,34 @@ export class BackupPage {
       statusMsg.textContent = `Última sincronización: ${dateFormatted}`;
     } else {
       statusMsg.textContent = enabled ? 'Habilitada (sin sincronizar)' : 'Sincronización inactiva';
+    }
+
+    // Consultar IP local si somos Host
+    const updateHostInfo = async () => {
+      const isEnabled = enabledCheckbox.checked;
+      const selectedRole = roleHostRadio.checked ? 'host' : 'client';
+      if (isEnabled && selectedRole === 'host') {
+        if (hostInfoContainer && hostUrlText) {
+          hostInfoContainer.style.display = 'flex';
+          hostUrlText.textContent = 'Consultando IP local... ⏳';
+          const info = await this.syncService.getHostInfo();
+          if (info) {
+            hostUrlText.textContent = info.access_url;
+          } else {
+            const currentHostname = window.location.hostname || 'localhost';
+            hostUrlText.textContent = `http://${currentHostname}:8000`;
+          }
+        }
+      } else {
+        if (hostInfoContainer) {
+          hostInfoContainer.style.display = 'none';
+        }
+      }
+    };
+
+    // Ejecutar consulta inicial
+    if (enabled && role === 'host') {
+      updateHostInfo();
     }
 
     // Eventos
@@ -90,12 +127,38 @@ export class BackupPage {
       }
 
       await this.syncService.setSyncSettings(isEnabled, selectedRole, ipVal);
+      await updateHostInfo();
     };
 
     enabledCheckbox.addEventListener('change', saveSettings);
     roleHostRadio.addEventListener('change', saveSettings);
     roleClientRadio.addEventListener('change', saveSettings);
     hostIpInput.addEventListener('input', saveSettings);
+
+    // Botón de autodetección
+    if (detectIpBtn) {
+      detectIpBtn.addEventListener('click', () => {
+        const currentHostname = window.location.hostname;
+        if (currentHostname && currentHostname !== 'localhost' && currentHostname !== '127.0.0.1' && currentHostname !== '::1' && currentHostname !== '') {
+          hostIpInput.value = currentHostname;
+          showToast('IP del Host detectada correctamente');
+          saveSettings();
+        } else {
+          showToast('No se puede autodetectar desde esta PC local (localhost).', 'danger');
+        }
+      });
+    }
+
+    // Botón de guía colapsable
+    if (toggleGuideBtn && quickGuideContainer) {
+      toggleGuideBtn.addEventListener('click', () => {
+        const isHidden = quickGuideContainer.style.display === 'none' || quickGuideContainer.style.display === '';
+        quickGuideContainer.style.display = isHidden ? 'flex' : 'none';
+        toggleGuideBtn.innerHTML = isHidden 
+          ? '<span>📖 Ocultar Guía de Sincronización</span>' 
+          : '<span>📖 Ver Guía Rápida de Sincronización</span>';
+      });
+    }
 
     syncNowBtn.addEventListener('click', async () => {
       try {
