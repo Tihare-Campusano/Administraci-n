@@ -8,4 +8,5 @@ export interface Product {
   available: boolean;
   createdAt: string;
   updatedAt: string;
+  deleted?: boolean;
 }

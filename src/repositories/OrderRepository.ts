@@ -11,6 +11,21 @@ export class OrderRepository {
       const store = transaction.objectStore(this.storeName);
       const request = store.getAll();
 
+      request.onsuccess = () => {
+        const list: Order[] = request.result || [];
+        resolve(list.filter(o => !o.deleted));
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllRaw(): Promise<Order[]> {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.storeName, 'readonly');
+      const store = transaction.objectStore(this.storeName);
+      const request = store.getAll();
+
       request.onsuccess = () => resolve(request.result || []);
       request.onerror = () => reject(request.error);
     });
@@ -29,6 +44,10 @@ export class OrderRepository {
   }
 
   async save(order: Order): Promise<Order> {
+    order.updatedAt = new Date().toISOString();
+    if (order.deleted === undefined) {
+      order.deleted = false;
+    }
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(this.storeName, 'readwrite');
@@ -41,14 +60,11 @@ export class OrderRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, 'readwrite');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.delete(id);
-
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    const order = await this.getById(id);
+    if (order) {
+      order.deleted = true;
+      order.updatedAt = new Date().toISOString();
+      await this.save(order);
+    }
   }
 }

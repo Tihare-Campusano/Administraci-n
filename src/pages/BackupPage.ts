@@ -2,10 +2,12 @@ import { BackupService } from '../services/BackupService';
 import { SecurityService } from '../services/SecurityService';
 import { PinLogin } from '../components/PinLogin';
 import { showToast } from '../components/Toast';
+import { SyncService } from '../services/SyncService';
 
 export class BackupPage {
   private backupService = new BackupService();
   private securityService = new SecurityService();
+  private syncService = new SyncService();
   private pinLogin!: PinLogin;
   private onReloadNeeded: () => void = () => {};
 
@@ -22,7 +24,100 @@ export class BackupPage {
     document.getElementById('btn-security-toggle')?.addEventListener('click', () => this.handleSecurityToggle());
     document.getElementById('btn-security-change')?.addEventListener('click', () => this.handleSecurityChange());
     
+    // Sincronización Local
+    this.setupSyncUI();
+    
     this.updateSecurityStatusUI();
+  }
+
+  private async setupSyncUI(): Promise<void> {
+    const enabledCheckbox = document.getElementById('sync-enabled-checkbox') as HTMLInputElement;
+    const detailsContainer = document.getElementById('sync-config-details');
+    const roleHostRadio = document.getElementById('sync-role-host') as HTMLInputElement;
+    const roleClientRadio = document.getElementById('sync-role-client') as HTMLInputElement;
+    const ipContainer = document.getElementById('sync-ip-container');
+    const hostIpInput = document.getElementById('sync-host-ip') as HTMLInputElement;
+    const syncNowBtn = document.getElementById('btn-sync-now') as HTMLButtonElement;
+    const statusMsg = document.getElementById('sync-status-msg');
+
+    if (!enabledCheckbox || !detailsContainer || !roleHostRadio || !roleClientRadio || !ipContainer || !hostIpInput || !syncNowBtn || !statusMsg) {
+      return;
+    }
+
+    // Cargar estado inicial de los ajustes
+    const enabled = await this.syncService.isSyncEnabled();
+    const role = await this.syncService.getSyncRole();
+    const hostIp = await this.syncService.getSyncHostIp();
+    const lastDate = await this.syncService.getLastSyncDate();
+
+    enabledCheckbox.checked = enabled;
+    detailsContainer.style.display = enabled ? 'flex' : 'none';
+    syncNowBtn.disabled = !enabled;
+
+    if (role === 'client') {
+      roleClientRadio.checked = true;
+      ipContainer.style.display = 'flex';
+    } else {
+      roleHostRadio.checked = true;
+      ipContainer.style.display = 'none';
+    }
+
+    hostIpInput.value = hostIp;
+
+    if (lastDate) {
+      const dateFormatted = new Date(lastDate).toLocaleString();
+      statusMsg.textContent = `Última sincronización: ${dateFormatted}`;
+    } else {
+      statusMsg.textContent = enabled ? 'Habilitada (sin sincronizar)' : 'Sincronización inactiva';
+    }
+
+    // Eventos
+    const saveSettings = async () => {
+      const isEnabled = enabledCheckbox.checked;
+      const selectedRole = roleHostRadio.checked ? 'host' : 'client';
+      const ipVal = hostIpInput.value.trim();
+
+      detailsContainer.style.display = isEnabled ? 'flex' : 'none';
+      ipContainer.style.display = (isEnabled && selectedRole === 'client') ? 'flex' : 'none';
+      syncNowBtn.disabled = !isEnabled;
+
+      if (!isEnabled) {
+        statusMsg.textContent = 'Sincronización inactiva';
+      } else if (lastDate) {
+        statusMsg.textContent = `Última sincronización: ${new Date(lastDate).toLocaleString()}`;
+      } else {
+        statusMsg.textContent = 'Habilitada (sin sincronizar)';
+      }
+
+      await this.syncService.setSyncSettings(isEnabled, selectedRole, ipVal);
+    };
+
+    enabledCheckbox.addEventListener('change', saveSettings);
+    roleHostRadio.addEventListener('change', saveSettings);
+    roleClientRadio.addEventListener('change', saveSettings);
+    hostIpInput.addEventListener('input', saveSettings);
+
+    syncNowBtn.addEventListener('click', async () => {
+      try {
+        syncNowBtn.disabled = true;
+        statusMsg.textContent = 'Sincronizando... ⏳';
+        statusMsg.style.color = 'var(--text-secondary)';
+
+        await this.syncService.syncNow();
+
+        const newLastDate = await this.syncService.getLastSyncDate();
+        statusMsg.textContent = `¡Sincronizado con éxito! ✅ (${new Date(newLastDate).toLocaleTimeString()})`;
+        statusMsg.style.color = 'var(--success)';
+        showToast('Sincronización completada correctamente');
+      } catch (err: any) {
+        console.error(err);
+        statusMsg.textContent = `Error al sincronizar: ${err.message || 'Error de red'}`;
+        statusMsg.style.color = 'var(--danger)';
+        showToast('Fallo en la sincronización local', 'danger');
+      } finally {
+        syncNowBtn.disabled = false;
+      }
+    });
   }
 
   async updateSecurityStatusUI(): Promise<void> {

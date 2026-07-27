@@ -5,4 +5,7 @@ export interface Customer {
   address: string;
   notes: string;
   createdAt: string;
+  updatedAt: string;
+  deleted?: boolean;
 }
+

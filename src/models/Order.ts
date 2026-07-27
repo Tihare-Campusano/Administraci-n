@@ -20,4 +20,6 @@ export interface Order {
   notes: string;
   createdAt: string;
   completedAt?: string;
+  updatedAt: string;
+  deleted?: boolean;
 }

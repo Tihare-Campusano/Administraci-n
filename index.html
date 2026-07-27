@@ -12,7 +12,9 @@
   <!-- Navigation Sidebar -->
   <aside>
     <div class="logo-container">
-      <div class="logo-icon">🧁</div>
+      <div class="logo-icon" style="background: none; box-shadow: none; padding: 0;">
+        <img src="/src/assets/gato_chef.jpg" alt="Logo Gato Chef" style="width: 100%; height: 100%; border-radius: 12px; object-fit: cover; border: 1.5px solid var(--accent);">
+      </div>
       <div class="logo-text">FoodAdmin</div>
     </div>
     
@@ -94,6 +96,15 @@
           </button>
         </div>
       </header>
+
+      <!-- Welcome Michi Card -->
+      <div class="glass-card" style="display: flex; align-items: center; gap: 15px; padding: 12px 20px; margin-bottom: 1.5rem; border-color: rgba(236, 72, 153, 0.15); background: linear-gradient(90deg, rgba(236, 72, 153, 0.05) 0%, rgba(19, 27, 46, 0.3) 100%);">
+        <img src="/src/assets/gato_chef.jpg" alt="Chef Michi" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); flex-shrink: 0; box-shadow: 0 0 10px rgba(236, 72, 153, 0.2);">
+        <div>
+          <h3 style="font-size: 1rem; font-weight: 700; color: var(--accent); margin-bottom: 2px;">¡Bienvenido de vuelta, Chef!</h3>
+          <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">Michi Chef está listo para ayudarte a organizar los pedidos y las conchas de hoy. 🐾🧁</p>
+        </div>
+      </div>
 
       <!-- Dashboard Stats Grid -->
       <div class="stats-grid">
@@ -295,6 +306,40 @@
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="btn btn-primary" id="btn-security-toggle">Cargando...</button>
             <button class="btn btn-secondary" id="btn-security-change" style="display: none;">Cambiar PIN</button>
+          </div>
+        </div>
+
+        <!-- Sync Card -->
+        <div class="glass-card" id="sync-settings-card">
+          <h2 class="card-title" style="margin-bottom: 10px;">Sincronización Local (Red/Ethernet)</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.2rem;">Sincroniza tus datos localmente con la computadora de tu pareja en la misma red o por cable.</p>
+          
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.95rem;">
+              <input type="checkbox" id="sync-enabled-checkbox" style="width: 16px; height: 16px; accent-color: var(--accent);">
+              Habilitar Sincronización Local
+            </label>
+            
+            <div id="sync-config-details" style="display: none; flex-direction: column; gap: 12px; border-left: 2px solid var(--accent); padding-left: 12px; margin-top: 4px;">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
+                  <input type="radio" name="sync-role" value="host" id="sync-role-host" checked style="accent-color: var(--accent);"> Host (Esta PC principal)
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
+                  <input type="radio" name="sync-role" value="client" id="sync-role-client" style="accent-color: var(--accent);"> Cliente (PC de pareja)
+                </label>
+              </div>
+              
+              <div id="sync-ip-container" style="display: none; flex-direction: column; gap: 4px;">
+                <label for="sync-host-ip" style="font-size: 0.85rem; color: var(--text-secondary);">IP local del PC Host (Ej: 192.168.1.100)</label>
+                <input type="text" id="sync-host-ip" class="form-input" placeholder="Ingresa la IP de la otra computadora..." style="padding: 6px 10px; font-size: 0.9rem;">
+              </div>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
+            <button class="btn btn-primary" id="btn-sync-now" disabled>Sincronizar Ahora</button>
+            <span id="sync-status-msg" style="font-size: 0.85rem; color: var(--text-secondary);">Sincronización inactiva</span>
           </div>
         </div>
 
@@ -547,8 +592,10 @@
   <!-- D. PIN LOGIN OVERLAY -->
   <div id="pin-login-overlay" class="pin-overlay">
     <div class="glass-card pin-card">
-      <div class="pin-header">
-        <div class="pin-logo">🧁</div>
+      <div class="pin-header" style="display: flex; flex-direction: column; align-items: center;">
+        <div class="pin-logo" style="filter: none; animation: none; margin-bottom: 0.5rem; width: 80px; height: 80px;">
+          <img src="/src/assets/gato_chef.jpg" alt="Michi Chef Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--accent); box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);">
+        </div>
         <h2 class="pin-title" id="pin-title">Ingresa tu PIN de Seguridad</h2>
       </div>
       <div class="pin-dots-container" id="pin-dots">

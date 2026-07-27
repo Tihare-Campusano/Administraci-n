@@ -43,7 +43,8 @@ export class OrderService {
       paymentStatus: data.paymentStatus,
       status: 'pending',
       notes: data.notes,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     return this.repo.save(newOrder);

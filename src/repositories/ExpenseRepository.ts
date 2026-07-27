@@ -11,6 +11,21 @@ export class ExpenseRepository {
       const store = transaction.objectStore(this.storeName);
       const request = store.getAll();
 
+      request.onsuccess = () => {
+        const list: Expense[] = request.result || [];
+        resolve(list.filter(e => !e.deleted));
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllRaw(): Promise<Expense[]> {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.storeName, 'readonly');
+      const store = transaction.objectStore(this.storeName);
+      const request = store.getAll();
+
       request.onsuccess = () => resolve(request.result || []);
       request.onerror = () => reject(request.error);
     });
@@ -29,6 +44,14 @@ export class ExpenseRepository {
   }
 
   async save(expense: Expense): Promise<Expense> {
+    const now = new Date().toISOString();
+    if (!expense.createdAt) {
+      expense.createdAt = now;
+    }
+    expense.updatedAt = now;
+    if (expense.deleted === undefined) {
+      expense.deleted = false;
+    }
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(this.storeName, 'readwrite');
@@ -41,14 +64,11 @@ export class ExpenseRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, 'readwrite');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.delete(id);
-
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    const expense = await this.getById(id);
+    if (expense) {
+      expense.deleted = true;
+      expense.updatedAt = new Date().toISOString();
+      await this.save(expense);
+    }
   }
 }

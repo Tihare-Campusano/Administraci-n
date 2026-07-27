@@ -7,11 +7,14 @@ import { BackupPage } from './pages/BackupPage';
 import { OrderModal } from './components/OrderModal';
 import { ProductRepository } from './repositories/ProductRepository';
 import { CustomerRepository } from './repositories/CustomerRepository';
+import { Customer } from './models/Customer';
 import { showToast } from './components/Toast';
 import { PinLogin } from './components/PinLogin';
 import { SecurityService } from './services/SecurityService';
+import { SyncService } from './services/SyncService';
 
 // Global Instances
+const syncService = new SyncService();
 const dashboardPage = new DashboardPage();
 const activeOrdersPage = new ActiveOrdersPage();
 const historyPage = new HistoryPage();
@@ -107,9 +110,9 @@ async function seedDatabaseIfEmpty() {
   }
 
   if (customers.length === 0) {
-    const dummyCustomers = [
-      { id: 'cli_seed_1', name: 'Claudio Martínez', phone: '+569 8765 4321', address: 'Los Aromos 442', notes: 'Portón de madera.', createdAt: new Date().toISOString() },
-      { id: 'cli_seed_2', name: 'Tihare Campusano', phone: '+569 9876 5432', address: 'Av. Providencia 1202', notes: 'Dejar en conserjería.', createdAt: new Date().toISOString() }
+    const dummyCustomers: Customer[] = [
+      { id: 'cli_seed_1', name: 'Claudio Martínez', phone: '+569 8765 4321', address: 'Los Aromos 442', notes: 'Portón de madera.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), deleted: false },
+      { id: 'cli_seed_2', name: 'Tihare Campusano', phone: '+569 9876 5432', address: 'Av. Providencia 1202', notes: 'Dejar en conserjería.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), deleted: false }
     ];
     for (const c of dummyCustomers) await custRepo.save(c);
   }
@@ -150,6 +153,18 @@ async function init() {
       pinLogin.show('lock');
     }
     
+    // Iniciar sincronización automática si está habilitada
+    const isSyncActive = await syncService.isSyncEnabled();
+    if (isSyncActive) {
+      syncService.startAutoSync();
+      syncService.syncNow().catch(err => console.warn('Error al sincronizar al iniciar:', err));
+    }
+
+    // Escuchar evento de sincronización para actualizar la interfaz
+    window.addEventListener('db-synced', () => {
+      loadTabData(currentTab);
+    });
+
     setupTabNavigation();
     loadTabData('dashboard');
   } catch (err) {

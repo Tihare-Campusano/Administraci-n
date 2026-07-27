@@ -12,7 +12,7 @@ export class CustomerService {
     return this.repo.getById(id);
   }
 
-  async saveCustomer(data: Omit<Customer, 'createdAt'>): Promise<Customer> {
+  async saveCustomer(data: Omit<Customer, 'createdAt' | 'updatedAt'>): Promise<Customer> {
     if (!data.name.trim()) {
       throw new Error('El nombre del cliente es obligatorio');
     }
@@ -21,7 +21,8 @@ export class CustomerService {
     
     const customer: Customer = {
       ...data,
-      createdAt: existing ? existing.createdAt : new Date().toISOString()
+      createdAt: existing ? existing.createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     return this.repo.save(customer);
