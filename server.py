@@ -178,4 +178,8 @@ def start_dev_server():
         sys.exit(1)
 
 if __name__ == '__main__':
-    start_dev_server()
+    # Check if we only want to run the sync server
+    if len(sys.argv) > 1 and sys.argv[1] == '--sync-only':
+        start_sync_server()
+    else:
+        start_dev_server()
