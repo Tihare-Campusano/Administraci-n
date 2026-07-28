@@ -3,11 +3,13 @@ import { SecurityService } from '../services/SecurityService';
 import { PinLogin } from '../components/PinLogin';
 import { showToast } from '../components/Toast';
 import { SyncService } from '../services/SyncService';
+import { SupabaseService } from '../services/SupabaseService';
 
 export class BackupPage {
   private backupService = new BackupService();
   private securityService = new SecurityService();
   private syncService = new SyncService();
+  private supabaseService = new SupabaseService();
   private pinLogin!: PinLogin;
   private onReloadNeeded: () => void = () => {};
 
@@ -26,144 +28,55 @@ export class BackupPage {
     
     // Sincronización Local
     this.setupSyncUI();
+
+    // Sincronización Supabase Cloud
+    this.setupSupabaseUI();
     
     this.updateSecurityStatusUI();
   }
 
   private async setupSyncUI(): Promise<void> {
-    const enabledCheckbox = document.getElementById('sync-enabled-checkbox') as HTMLInputElement;
-    const detailsContainer = document.getElementById('sync-config-details');
-    const roleHostRadio = document.getElementById('sync-role-host') as HTMLInputElement;
-    const roleClientRadio = document.getElementById('sync-role-client') as HTMLInputElement;
-    const ipContainer = document.getElementById('sync-ip-container');
-    const hostIpInput = document.getElementById('sync-host-ip') as HTMLInputElement;
     const syncNowBtn = document.getElementById('btn-sync-now') as HTMLButtonElement;
     const statusMsg = document.getElementById('sync-status-msg');
-    
-    // Elementos nuevos
-    const hostInfoContainer = document.getElementById('sync-host-info-container');
-    const hostUrlText = document.getElementById('sync-host-url');
-    const detectIpBtn = document.getElementById('btn-detect-ip');
-    const toggleGuideBtn = document.getElementById('btn-toggle-sync-guide');
-    const quickGuideContainer = document.getElementById('sync-quick-guide');
+    const quickUrlSpan = document.getElementById('sync-quick-url');
 
-    if (!enabledCheckbox || !detailsContainer || !roleHostRadio || !roleClientRadio || !ipContainer || !hostIpInput || !syncNowBtn || !statusMsg) {
+    if (!syncNowBtn || !statusMsg) {
       return;
     }
 
-    // Cargar estado inicial de los ajustes
-    const enabled = await this.syncService.isSyncEnabled();
-    const role = await this.syncService.getSyncRole();
-    const hostIp = await this.syncService.getSyncHostIp();
+    // Cargar estado inicial y habilitar autosync por defecto
     const lastDate = await this.syncService.getLastSyncDate();
-
-    enabledCheckbox.checked = enabled;
-    detailsContainer.style.display = enabled ? 'flex' : 'none';
-    syncNowBtn.disabled = !enabled;
-
-    if (role === 'client') {
-      roleClientRadio.checked = true;
-      ipContainer.style.display = 'flex';
-      if (hostInfoContainer) hostInfoContainer.style.display = 'none';
-    } else {
-      roleHostRadio.checked = true;
-      ipContainer.style.display = 'none';
-      if (hostInfoContainer && enabled) hostInfoContainer.style.display = 'flex';
-    }
-
-    hostIpInput.value = hostIp;
-
     if (lastDate) {
-      const dateFormatted = new Date(lastDate).toLocaleString();
-      statusMsg.textContent = `Última sincronización: ${dateFormatted}`;
+      statusMsg.textContent = `Última sincronización: ${new Date(lastDate).toLocaleString()}`;
     } else {
-      statusMsg.textContent = enabled ? 'Habilitada (sin sincronizar)' : 'Sincronización inactiva';
+      statusMsg.textContent = 'Lista para sincronizar (automática activa)';
     }
 
-    // Consultar IP local si somos Host
-    const updateHostInfo = async () => {
-      const isEnabled = enabledCheckbox.checked;
-      const selectedRole = roleHostRadio.checked ? 'host' : 'client';
-      if (isEnabled && selectedRole === 'host') {
-        if (hostInfoContainer && hostUrlText) {
-          hostInfoContainer.style.display = 'flex';
-          hostUrlText.textContent = 'Consultando IP local... ⏳';
-          const info = await this.syncService.getHostInfo();
-          if (info) {
-            hostUrlText.textContent = info.access_url;
-          } else {
-            const currentHostname = window.location.hostname || 'localhost';
-            hostUrlText.textContent = `http://${currentHostname}:8000`;
-          }
-        }
-      } else {
-        if (hostInfoContainer) {
-          hostInfoContainer.style.display = 'none';
-        }
-      }
-    };
+    // Iniciar auto-sincronización en segundo plano automáticamente
+    this.syncService.startAutoSync();
 
-    // Ejecutar consulta inicial
-    if (enabled && role === 'host') {
-      updateHostInfo();
-    }
-
-    // Eventos
-    const saveSettings = async () => {
-      const isEnabled = enabledCheckbox.checked;
-      const selectedRole = roleHostRadio.checked ? 'host' : 'client';
-      const ipVal = hostIpInput.value.trim();
-
-      detailsContainer.style.display = isEnabled ? 'flex' : 'none';
-      ipContainer.style.display = (isEnabled && selectedRole === 'client') ? 'flex' : 'none';
-      syncNowBtn.disabled = !isEnabled;
-
-      if (!isEnabled) {
-        statusMsg.textContent = 'Sincronización inactiva';
-      } else if (lastDate) {
-        statusMsg.textContent = `Última sincronización: ${new Date(lastDate).toLocaleString()}`;
-      } else {
-        statusMsg.textContent = 'Habilitada (sin sincronizar)';
-      }
-
-      await this.syncService.setSyncSettings(isEnabled, selectedRole, ipVal);
-      await updateHostInfo();
-    };
-
-    enabledCheckbox.addEventListener('change', saveSettings);
-    roleHostRadio.addEventListener('change', saveSettings);
-    roleClientRadio.addEventListener('change', saveSettings);
-    hostIpInput.addEventListener('input', saveSettings);
-
-    // Botón de autodetección
-    if (detectIpBtn) {
-      detectIpBtn.addEventListener('click', () => {
-        const currentHostname = window.location.hostname;
-        if (currentHostname && currentHostname !== 'localhost' && currentHostname !== '127.0.0.1' && currentHostname !== '::1' && currentHostname !== '') {
-          hostIpInput.value = currentHostname;
-          showToast('IP del Host detectada correctamente');
-          saveSettings();
+    // Obtener y mostrar la URL de acceso del host
+    const updateUrlDisplay = async () => {
+      if (quickUrlSpan) {
+        quickUrlSpan.textContent = 'Obteniendo dirección local...';
+        const info = await this.syncService.getHostInfo();
+        if (info && info.access_url) {
+          quickUrlSpan.textContent = info.access_url;
         } else {
-          showToast('No se puede autodetectar desde esta PC local (localhost).', 'danger');
+          // Fallback a partir de la URL actual si el servidor local de info no responde o está offline
+          const currentHostname = window.location.hostname || 'localhost';
+          const currentPort = window.location.port || '8000';
+          quickUrlSpan.textContent = `http://${currentHostname}:${currentPort}`;
         }
-      });
-    }
+      }
+    };
+    updateUrlDisplay();
 
-    // Botón de guía colapsable
-    if (toggleGuideBtn && quickGuideContainer) {
-      toggleGuideBtn.addEventListener('click', () => {
-        const isHidden = quickGuideContainer.style.display === 'none' || quickGuideContainer.style.display === '';
-        quickGuideContainer.style.display = isHidden ? 'flex' : 'none';
-        toggleGuideBtn.innerHTML = isHidden 
-          ? '<span>📖 Ocultar Guía de Sincronización</span>' 
-          : '<span>📖 Ver Guía Rápida de Sincronización</span>';
-      });
-    }
-
+    // Evento de Sincronización Manual
     syncNowBtn.addEventListener('click', async () => {
       try {
         syncNowBtn.disabled = true;
-        statusMsg.textContent = 'Sincronizando... ⏳';
+        statusMsg.textContent = 'Sincronizando datos... ⏳';
         statusMsg.style.color = 'var(--text-secondary)';
 
         await this.syncService.syncNow();
@@ -179,6 +92,72 @@ export class BackupPage {
         showToast('Fallo en la sincronización local', 'danger');
       } finally {
         syncNowBtn.disabled = false;
+      }
+    });
+  }
+
+  private async setupSupabaseUI(): Promise<void> {
+    const urlInput = document.getElementById('supabase-url') as HTMLInputElement;
+    const keyInput = document.getElementById('supabase-key') as HTMLInputElement;
+    const testBtn = document.getElementById('btn-supabase-test') as HTMLButtonElement;
+    const statusMsg = document.getElementById('supabase-status-msg');
+
+    if (!urlInput || !keyInput || !testBtn || !statusMsg) {
+      return;
+    }
+
+    // Cargar credenciales iniciales
+    const creds = await this.supabaseService.getCredentials();
+    urlInput.value = creds.url;
+    keyInput.value = creds.key;
+
+    const updateStatus = async () => {
+      const isConnected = await this.supabaseService.isConfigured();
+      if (isConnected) {
+        statusMsg.textContent = 'Conectado ✅';
+        statusMsg.style.color = 'var(--success)';
+      } else {
+        statusMsg.textContent = 'Desconectado';
+        statusMsg.style.color = 'var(--text-secondary)';
+      }
+    };
+    updateStatus();
+
+    // Evento de prueba y conexión
+    testBtn.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
+      const key = keyInput.value.trim();
+
+      testBtn.disabled = true;
+      statusMsg.textContent = 'Probando conexión... ⏳';
+      statusMsg.style.color = 'var(--text-secondary)';
+
+      try {
+        const success = await this.supabaseService.saveCredentials(url, key);
+        if (success) {
+          statusMsg.textContent = 'Conectado ✅';
+          statusMsg.style.color = 'var(--success)';
+          showToast('Conectado a Supabase correctamente');
+          
+          // Sincronizar de inmediato
+          try {
+            await this.syncService.syncNow();
+            showToast('Sincronización en la nube realizada con éxito');
+          } catch (syncErr: any) {
+            console.error(syncErr);
+            showToast('Supabase conectado, pero falta crear las tablas en tu base de datos', 'danger');
+          }
+        } else {
+          statusMsg.textContent = 'Error de conexión ❌';
+          statusMsg.style.color = 'var(--danger)';
+          showToast('Credenciales incorrectas o servidor inalcanzable', 'danger');
+        }
+      } catch (err: any) {
+        statusMsg.textContent = 'Error de conexión ❌';
+        statusMsg.style.color = 'var(--danger)';
+        showToast('Error de conexión a Supabase', 'danger');
+      } finally {
+        testBtn.disabled = false;
       }
     });
   }

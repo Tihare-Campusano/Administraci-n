@@ -9,4 +9,5 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
   deleted?: boolean;
+  image?: string;
 }

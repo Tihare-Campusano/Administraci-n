@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Aplicación de administración de ventas de comida, finanzas, pedidos activos e historial.">
   <title>FoodAdmin | Control de Ventas de Comida</title>
-  <script type="module" crossorigin src="./assets/index-BFa-lLyn.js"></script>
+  <script type="module" crossorigin src="./assets/index-BdZ34_ab.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-BLdOCsM2.css">
 </head>
 <body>
@@ -310,64 +310,46 @@
           </div>
         </div>
 
-        <!-- Sync Card -->
+        <!-- Sync Card Simplificada -->
         <div class="glass-card" id="sync-settings-card">
-          <h2 class="card-title" style="margin-bottom: 10px;">Sincronización Local (Red/Ethernet)</h2>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.2rem;">Sincroniza tus datos localmente con la computadora de tu pareja en la misma red o por cable.</p>
+          <h2 class="card-title" style="margin-bottom: 10px;">Sincronización Local</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Sincroniza tus ventas, catálogo de productos y directorio de clientes entre tus dispositivos en la misma red local en tiempo real.</p>
+          
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;">
+            <button class="btn btn-primary" id="btn-sync-now" style="padding: 10px 20px; font-weight: 600;">Sincronizar Ahora</button>
+            <span id="sync-status-msg" style="font-size: 0.85rem; color: var(--text-secondary);">Listo para sincronizar</span>
+          </div>
+
+          <!-- Guía automatizada -->
+          <div style="border-top: 1px solid var(--border-glass); padding-top: 15px; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; line-height: 1.5;">
+            <span style="font-weight: 700; color: var(--accent); display: block;">¿Cómo conectar otra PC o Celular?</span>
+            <ul style="color: var(--text-secondary); margin-left: 1.2rem; display: flex; flex-direction: column; gap: 6px;">
+              <li>En tu PC principal, abre la app desde el acceso directo.</li>
+              <li>En la PC de tu pareja o tu celular (conectados al mismo WiFi), abre el navegador web e ingresa a: <strong id="sync-quick-url" style="color: var(--text-primary); font-family: monospace;">http://...</strong></li>
+              <li>¡Listo! Ambos dispositivos compartirán la misma información automáticamente en segundo plano.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Supabase Cloud Sync Card -->
+        <div class="glass-card" id="supabase-settings-card" style="border-color: rgba(16, 185, 129, 0.15);">
+          <h2 class="card-title" style="margin-bottom: 10px; color: #10b981;">Nube (Supabase Cloud Sync)</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.2rem;">Sincroniza tus datos de forma segura en internet para acceder desde cualquier red o dispositivo.</p>
           
           <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem;">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.95rem;">
-              <input type="checkbox" id="sync-enabled-checkbox" style="width: 16px; height: 16px; accent-color: var(--accent);">
-              Habilitar Sincronización Local
-            </label>
-            
-            <div id="sync-config-details" style="display: none; flex-direction: column; gap: 12px; border-left: 2px solid var(--accent); padding-left: 12px; margin-top: 4px;">
-              <div style="display: flex; gap: 12px; align-items: center;">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
-                  <input type="radio" name="sync-role" value="host" id="sync-role-host" checked style="accent-color: var(--accent);"> Host (Esta PC principal)
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
-                  <input type="radio" name="sync-role" value="client" id="sync-role-client" style="accent-color: var(--accent);"> Cliente (PC de pareja)
-                </label>
-              </div>
-
-              <!-- Host Info Section -->
-              <div id="sync-host-info-container" style="display: none; flex-direction: column; gap: 6px; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px dashed rgba(236, 72, 153, 0.3);">
-                <span style="font-size: 0.85rem; color: var(--text-secondary);">Dirección de acceso para pareja/móvil:</span>
-                <strong style="font-size: 0.95rem; color: var(--accent); font-family: monospace;" id="sync-host-url">http://cargando...</strong>
-                <span style="font-size: 0.8rem; color: var(--text-secondary);">Abre esta dirección en el navegador de tu celular u otra PC conectada a la misma red WiFi.</span>
-              </div>
-              
-              <!-- Client Config Section -->
-              <div id="sync-ip-container" style="display: none; flex-direction: column; gap: 6px;">
-                <label for="sync-host-ip" style="font-size: 0.85rem; color: var(--text-secondary);">IP local del PC Host (Servidor)</label>
-                <div style="display: flex; gap: 8px;">
-                  <input type="text" id="sync-host-ip" class="form-input" placeholder="Ej: 192.168.1.100" style="padding: 6px 10px; font-size: 0.9rem; flex-grow: 1;">
-                  <button type="button" class="btn btn-secondary" id="btn-detect-ip" style="padding: 6px 12px; font-size: 0.85rem; white-space: nowrap;">Autodetectar</button>
-                </div>
-                <span style="font-size: 0.8rem; color: var(--text-secondary);" id="sync-detect-helper">Dejar vacío o presionar "Autodetectar" si abriste la app usando la red local.</span>
-              </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="supabase-url" style="font-size: 0.85rem; color: var(--text-secondary);">Supabase Project URL</label>
+              <input type="text" id="supabase-url" class="form-input" placeholder="Ej: https://abcde12345.supabase.co" style="padding: 6px 10px; font-size: 0.9rem;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="supabase-key" style="font-size: 0.85rem; color: var(--text-secondary);">Supabase Anon Key</label>
+              <input type="password" id="supabase-key" class="form-input" placeholder="Ingresa la clave anon_key de tu proyecto..." style="padding: 6px 10px; font-size: 0.9rem;">
             </div>
           </div>
           
           <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
-            <button class="btn btn-primary" id="btn-sync-now" disabled>Sincronizar Ahora</button>
-            <span id="sync-status-msg" style="font-size: 0.85rem; color: var(--text-secondary);">Sincronización inactiva</span>
-          </div>
-
-          <!-- Collapsible Guide -->
-          <div style="margin-top: 15px; border-top: 1px solid var(--border-glass); padding-top: 12px;">
-            <button id="btn-toggle-sync-guide" style="background: none; border: none; color: var(--accent); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 0;">
-              <span>📖 Ver Guía Rápida de Sincronización</span>
-            </button>
-            <div id="sync-quick-guide" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid var(--border-glass);">
-              <ol style="margin-left: 1.2rem; display: flex; flex-direction: column; gap: 6px; padding-left: 5px;">
-                <li><strong>PC Principal (Host):</strong> Activa la sincronización y selecciona <strong>Host</strong>. Anota la dirección de acceso que aparece en pantalla (ej: <code>http://192.168.1.15:8000</code>).</li>
-                <li><strong>Dispositivo Secundario (Cliente):</strong> Asegúrate de estar conectado al mismo WiFi. Abre el navegador e ingresa la dirección de acceso.</li>
-                <li><strong>Configurar Cliente:</strong> En el dispositivo cliente, ve a Ajustes y selecciona <strong>Cliente</strong>. Presiona <strong>Autodetectar</strong> para configurar la IP automáticamente en un clic.</li>
-                <li>¡Listo! Ambos dispositivos se mantendrán sincronizados automáticamente en segundo plano.</li>
-              </ol>
-            </div>
+            <button class="btn btn-secondary" id="btn-supabase-test" style="border-color: rgba(16, 185, 129, 0.3); color: #10b981;">Probar y Conectar</button>
+            <span id="supabase-status-msg" style="font-size: 0.85rem; color: var(--text-secondary);">Desconectado</span>
           </div>
         </div>
 
@@ -398,6 +380,7 @@
           <a href="#doc-arquitectura" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">📐 Arquitectura</a>
           <a href="#doc-run" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">💻 Ejecución Local</a>
           <a href="#doc-sync" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">🔄 Sincronización Local</a>
+          <a href="#doc-supabase" style="color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">☁️ Sincronización Supabase</a>
         </div>
 
         <!-- Documentation Content -->
@@ -475,6 +458,87 @@
               <li>Marca <strong>Habilitar Sincronización Local</strong> y selecciona el rol de <strong>Cliente</strong>.</li>
               <li>Haz clic en el botón <strong>Autodetectar</strong>. El sistema identificará automáticamente la dirección del Host a partir de la URL del navegador.</li>
               <li>Haz clic en <strong>Sincronizar Ahora</strong> para realizar la primera sincronización manual. ¡A partir de ahí se sincronizará solo cada 30 segundos!</li>
+            </ul>
+          </div>
+
+          <!-- Section 6 -->
+          <div id="doc-supabase">
+            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; color: #10b981;">☁️ Sincronización Supabase Cloud</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">FoodAdmin soporta la sincronización en la nube mediante Supabase de forma totalmente privada e híbrida (Offline-First). Si configuras Supabase, los datos se sincronizan con internet, pero seguirás pudiendo trabajar sin conexión a máxima velocidad.</p>
+            
+            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Paso 1: Crear un proyecto en Supabase</h3>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px;">
+              <li>Regístrate gratis en <a href="https://supabase.com" target="_blank" style="color: #10b981; font-weight: 600;">supabase.com</a> y crea un nuevo proyecto.</li>
+              <li>Anota la <strong>Project URL</strong> y la <strong>API Key (anon_key)</strong> desde los Ajustes de API de tu proyecto.</li>
+            </ul>
+
+            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Paso 2: Crear las tablas de la base de datos</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 10px;">Ve a la consola SQL de tu proyecto en Supabase (SQL Editor > New query) y ejecuta el siguiente script para crear las tablas compatibles:</p>
+            
+            <pre style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; border: 1px solid var(--border-glass); font-family: monospace; font-size: 0.8rem; color: var(--text-primary); max-height: 250px; overflow-y: auto; line-height: 1.4;">
+-- Tabla de productos
+create table products (
+  id text primary key,
+  name text not null,
+  description text,
+  price numeric not null,
+  cost numeric not null default 0,
+  category text,
+  available boolean not null default true,
+  image text,
+  created_at text,
+  updated_at text,
+  deleted boolean default false
+);
+
+-- Tabla de clientes
+create table customers (
+  id text primary key,
+  name text not null,
+  phone text,
+  address text,
+  notes text,
+  created_at text,
+  updated_at text,
+  deleted boolean default false
+);
+
+-- Tabla de pedidos (ordenes)
+create table orders (
+  id text primary key,
+  customer_id text,
+  products jsonb not null default '[]'::jsonb,
+  subtotal numeric not null,
+  discount numeric not null default 0,
+  total numeric not null,
+  payment_method text,
+  payment_status text,
+  status text,
+  notes text,
+  created_at text,
+  completed_at text,
+  updated_at text,
+  deleted boolean default false
+);
+
+-- Tabla de egresos (gastos)
+create table expenses (
+  id text primary key,
+  title text not null,
+  amount numeric not null,
+  category text,
+  date text,
+  created_at text,
+  updated_at text,
+  deleted boolean default false
+);
+            </pre>
+
+            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Paso 3: Conectar la aplicación</h3>
+            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px;">
+              <li>Ve a <strong>Respaldo y Ajustes</strong> > <strong>Nube (Supabase Cloud Sync)</strong>.</li>
+              <li>Ingresa la URL y anon_key y haz clic en <strong>Probar y Conectar</strong>.</li>
+              <li>¡Listo! Tu aplicación subirá automáticamente todos tus datos e imágenes y se sincronizará sola.</li>
             </ul>
           </div>
 
@@ -602,6 +666,17 @@
         <div class="form-group">
           <label for="product-description">Descripción / Ingredientes</label>
           <textarea class="form-input" id="product-description" rows="3" placeholder="Ej: Chocolate belga húmedo, trozos de nueces picadas..." style="resize: vertical;"></textarea>
+        </div>
+
+        <div class="form-row" style="align-items: center; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
+          <div class="form-group" style="flex-grow: 1;">
+            <label for="product-image-file">Foto del Producto (opcional)</label>
+            <input type="file" id="product-image-file" accept="image/*" class="form-input" style="padding: 5px;">
+          </div>
+          <div style="width: 60px; height: 60px; border-radius: 8px; border: 1px solid var(--border-glass); overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); flex-shrink: 0;">
+            <img id="product-image-preview" src="" alt="Vista previa" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+            <span id="product-image-placeholder" style="font-size: 1.2rem; color: var(--text-secondary);">🍽️</span>
+          </div>
         </div>
 
         <div class="form-actions">

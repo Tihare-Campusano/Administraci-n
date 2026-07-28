@@ -1,0 +1,76 @@
+{
+  "products": [
+    {
+      "id": "prod_seed_1",
+      "name": "Brownie de Chocolate Fudge",
+      "price": 2000,
+      "cost": 800,
+      "category": "Brownies",
+      "available": true,
+      "description": "Brownie húmedo con chocolate premium y trozos de nuez.",
+      "createdAt": "2026-07-28T00:03:14.023Z",
+      "updatedAt": "2026-07-28T00:03:24.831Z",
+      "deleted": true
+    },
+    {
+      "id": "prod_seed_2",
+      "name": "Queque Zanahoria-Nuez",
+      "price": 4500,
+      "cost": 1800,
+      "category": "Queques",
+      "available": true,
+      "description": "Esponjoso queque de zanahoria, nueces y frosting de queso crema.",
+      "createdAt": "2026-07-28T00:03:14.024Z",
+      "updatedAt": "2026-07-28T00:03:27.347Z",
+      "deleted": true
+    },
+    {
+      "id": "prod_seed_3",
+      "name": "Cupcake de Red Velvet",
+      "price": 1800,
+      "cost": 600,
+      "category": "Cupcakes",
+      "available": true,
+      "description": "Cupcake clásico aterciopelado con crema batida de vainilla.",
+      "createdAt": "2026-07-28T00:03:14.024Z",
+      "updatedAt": "2026-07-28T00:03:28.731Z",
+      "deleted": true
+    },
+    {
+      "id": "prod_seed_4",
+      "name": "Caja de 6 Mini Donitas",
+      "price": 3500,
+      "cost": 1200,
+      "category": "Donas",
+      "available": true,
+      "description": "Seis mini donas horneadas con cobertura glaseada de colores.",
+      "createdAt": "2026-07-28T00:03:14.024Z",
+      "updatedAt": "2026-07-28T00:03:14.026Z",
+      "deleted": false
+    }
+  ],
+  "customers": [
+    {
+      "id": "cli_seed_1",
+      "name": "Claudio Martínez",
+      "phone": "+569 8765 4321",
+      "address": "Los Aromos 442",
+      "notes": "Portón de madera.",
+      "createdAt": "2026-07-27T22:46:51.252Z",
+      "updatedAt": "2026-07-28T00:03:35.648Z",
+      "deleted": false
+    },
+    {
+      "id": "cli_seed_2",
+      "name": "Tihare Campusano",
+      "phone": "+569 9876 5432",
+      "address": "Av. Providencia 1202",
+      "notes": "Dejar en conserjería.",
+      "createdAt": "2026-07-27T22:46:51.252Z",
+      "updatedAt": "2026-07-28T00:03:35.649Z",
+      "deleted": false
+    }
+  ],
+  "orders": [],
+  "expenses": []
+}

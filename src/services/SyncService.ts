@@ -3,6 +3,7 @@ import { ProductRepository } from '../repositories/ProductRepository';
 import { CustomerRepository } from '../repositories/CustomerRepository';
 import { OrderRepository } from '../repositories/OrderRepository';
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
+import { SupabaseService } from './SupabaseService';
 
 export class SyncService {
   private secRepo = new SecurityRepository();
@@ -10,6 +11,7 @@ export class SyncService {
   private custRepo = new CustomerRepository();
   private orderRepo = new OrderRepository();
   private expRepo = new ExpenseRepository();
+  private supabaseService = new SupabaseService();
 
   private ENABLED_KEY = 'sync_enabled';
   private ROLE_KEY = 'sync_role';
@@ -62,26 +64,31 @@ export class SyncService {
   }
 
   async syncNow(): Promise<void> {
-    const enabled = await this.isSyncEnabled();
-    if (!enabled) return;
+    // 1. Priorizar sincronización con Supabase (Nube) si está configurado
+    try {
+      const isCloudConfigured = await this.supabaseService.isConfigured();
+      if (isCloudConfigured) {
+        await this.supabaseService.syncWithCloud();
+        const syncDate = new Date().toISOString();
+        await this.secRepo.setVal(this.LAST_DATE_KEY, syncDate);
+        window.dispatchEvent(new CustomEvent('db-synced'));
+        return; // Éxito en la nube, terminamos el proceso
+      }
+    } catch (e: any) {
+      console.warn('Fallo al sincronizar con Supabase Cloud, intentando fallback local...', e);
+      // Si el error indica que las tablas no están listas, lo lanzamos para que se muestre al usuario
+      if (e.message && e.message.includes('relation')) {
+        throw e;
+      }
+    }
 
-    const role = await this.getSyncRole();
-    let hostIp = await this.getSyncHostIp();
-    
-    // Determine API Endpoint
+    // 2. Fallback: Sincronización Local Inteligente (Red Local)
+    const currentHostname = window.location.hostname;
     let baseUrl = 'http://localhost:8080';
-    if (role === 'client') {
-      if (!hostIp) {
-        // Autodetectar IP a partir de la barra de direcciones del navegador
-        const currentHostname = window.location.hostname;
-        if (currentHostname && currentHostname !== 'localhost' && currentHostname !== '127.0.0.1' && currentHostname !== '::1' && currentHostname !== '') {
-          hostIp = currentHostname;
-        }
-      }
-      if (!hostIp) {
-        throw new Error('La dirección IP del Host no está configurada.');
-      }
-      baseUrl = `http://${hostIp}:8080`;
+    
+    if (currentHostname && currentHostname !== 'localhost' && currentHostname !== '127.0.0.1' && currentHostname !== '::1' && currentHostname !== '') {
+      // If we accessed via local network, the python sync server is at the same host IP
+      baseUrl = `http://${currentHostname}:8080`;
     }
 
     // 1. Gather all local data (including soft-deleted items)

@@ -11,6 +11,27 @@ export class CatalogPage {
     document.getElementById('close-product-modal')?.addEventListener('click', () => this.closeModal());
     document.getElementById('btn-cancel-product')?.addEventListener('click', () => this.closeModal());
     document.getElementById('product-form')?.addEventListener('submit', (e) => this.handleFormSubmit(e));
+
+    // Evento de previsualización de foto
+    const fileInput = document.getElementById('product-image-file') as HTMLInputElement;
+    const previewImg = document.getElementById('product-image-preview') as HTMLImageElement;
+    const placeholderSpan = document.getElementById('product-image-placeholder');
+
+    fileInput?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          if (previewImg && placeholderSpan) {
+            previewImg.src = evt.target?.result as string;
+            previewImg.style.display = 'block';
+            placeholderSpan.style.display = 'none';
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
   }
 
   async load(): Promise<void> {
@@ -42,16 +63,27 @@ export class CatalogPage {
 
   private renderProductsList(grid: HTMLElement, products: any[]): void {
     grid.innerHTML = products.map(product => `
-      <div class="glass-card catalog-card">
-        <div class="catalog-card-header">
-          <span class="catalog-card-badge">${product.category || 'Sin Categoría'}</span>
-          <span class="catalog-card-price">${formatMoney(product.price)}</span>
+      <div class="glass-card catalog-card" style="display: flex; flex-direction: column; overflow: hidden; padding: 0; min-height: 310px; transition: var(--transition-smooth);">
+        ${product.image ? `
+        <div style="width: 100%; height: 140px; overflow: hidden; border-bottom: 1px solid var(--border-glass); background: #000; position: relative;">
+          <img src="${product.image}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
         </div>
-        <h3 class="catalog-card-title">${product.name}</h3>
-        <p class="catalog-card-desc">${product.description || 'Sin descripción'}</p>
-        <div class="catalog-card-footer">
-          <button class="btn btn-secondary btn-sm edit-product-btn" data-id="${product.id}">Editar</button>
-          <button class="btn btn-danger btn-sm delete-product-btn" data-id="${product.id}">Borrar</button>
+        ` : `
+        <div style="width: 100%; height: 90px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(19, 27, 46, 0.15) 100%); border-bottom: 1px solid var(--border-glass);">
+          <span style="font-size: 1.8rem; filter: opacity(0.75);">🧁</span>
+        </div>
+        `}
+        <div style="padding: 15px; display: flex; flex-direction: column; flex-grow: 1; gap: 8px;">
+          <div class="catalog-card-header" style="margin: 0; padding: 0; display: flex; justify-content: space-between; align-items: center;">
+            <span class="catalog-card-badge">${product.category || 'Sin Categoría'}</span>
+            <span class="catalog-card-price">${formatMoney(product.price)}</span>
+          </div>
+          <h3 class="catalog-card-title" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">${product.name}</h3>
+          <p class="catalog-card-desc" style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 38px; flex-grow: 1;">${product.description || 'Sin descripción'}</p>
+          <div class="catalog-card-footer" style="margin-top: 8px; padding: 0; display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="btn btn-secondary btn-sm edit-product-btn" data-id="${product.id}" style="padding: 4px 10px; font-size: 0.75rem;">Editar</button>
+            <button class="btn btn-danger btn-sm delete-product-btn" data-id="${product.id}" style="padding: 4px 10px; font-size: 0.75rem;">Borrar</button>
+          </div>
         </div>
       </div>
     `).join('');
@@ -72,8 +104,18 @@ export class CatalogPage {
     this.selectedProductId = id || null;
     const form = document.getElementById('product-form') as HTMLFormElement;
     const title = document.getElementById('product-modal-title');
+    const previewImg = document.getElementById('product-image-preview') as HTMLImageElement;
+    const placeholderSpan = document.getElementById('product-image-placeholder');
+    const fileInput = document.getElementById('product-image-file') as HTMLInputElement;
+
     if (!form) return;
     form.reset();
+    if (fileInput) fileInput.value = '';
+    if (previewImg) {
+      previewImg.src = '';
+      previewImg.style.display = 'none';
+    }
+    if (placeholderSpan) placeholderSpan.style.display = 'block';
 
     const idInput = document.getElementById('product-id') as HTMLInputElement;
     if (idInput) idInput.value = id || '';
@@ -86,6 +128,11 @@ export class CatalogPage {
         (document.getElementById('product-price') as HTMLInputElement).value = prod.price.toString();
         (document.getElementById('product-category') as HTMLInputElement).value = prod.category || '';
         (document.getElementById('product-description') as HTMLTextAreaElement).value = prod.description || '';
+        if (prod.image && previewImg && placeholderSpan) {
+          previewImg.src = prod.image;
+          previewImg.style.display = 'block';
+          placeholderSpan.style.display = 'none';
+        }
       }
     } else if (title) {
       title.textContent = 'Agregar Producto';
@@ -105,17 +152,26 @@ export class CatalogPage {
     const price = parseFloat((document.getElementById('product-price') as HTMLInputElement).value) || 0;
     const category = (document.getElementById('product-category') as HTMLInputElement).value;
     const description = (document.getElementById('product-description') as HTMLTextAreaElement).value;
+    const previewImg = document.getElementById('product-image-preview') as HTMLImageElement;
+    
+    // Si la vista previa tiene una imagen cargada en base64
+    const imageBase64 = previewImg && previewImg.src.startsWith('data:') ? previewImg.src : undefined;
 
     try {
+      // Si estamos editando y no seleccionamos nueva foto, mantener la foto existente
+      const existingProduct = this.selectedProductId ? await this.productService.getProductById(this.selectedProductId) : null;
+      const finalImage = imageBase64 || existingProduct?.image;
+
       await this.productService.saveProduct({
         id: this.selectedProductId || '',
         name,
         price,
-        cost: this.selectedProductId ? (await this.productService.getProductById(this.selectedProductId))?.cost || 0 : 0, // Keep or default cost to 0 (cost can be edited later if we add cost input, let's keep it clean)
+        cost: existingProduct?.cost || 0,
         category,
         description,
-        available: true
-      });
+        available: true,
+        image: finalImage
+      } as any);
       showToast(this.selectedProductId ? 'Producto actualizado' : 'Producto agregado al catálogo');
       this.closeModal();
       this.load();
