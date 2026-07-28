@@ -126,6 +126,7 @@ export class CatalogPage {
       if (prod) {
         (document.getElementById('product-name') as HTMLInputElement).value = prod.name;
         (document.getElementById('product-price') as HTMLInputElement).value = prod.price.toString();
+        (document.getElementById('product-cost') as HTMLInputElement).value = prod.cost.toString();
         (document.getElementById('product-category') as HTMLInputElement).value = prod.category || '';
         (document.getElementById('product-description') as HTMLTextAreaElement).value = prod.description || '';
         if (prod.image && previewImg && placeholderSpan) {
@@ -148,11 +149,17 @@ export class CatalogPage {
 
   private async handleFormSubmit(e: Event): Promise<void> {
     e.preventDefault();
-    const name = (document.getElementById('product-name') as HTMLInputElement).value;
+    const name = (document.getElementById('product-name') as HTMLInputElement).value.trim();
     const price = parseFloat((document.getElementById('product-price') as HTMLInputElement).value) || 0;
-    const category = (document.getElementById('product-category') as HTMLInputElement).value;
-    const description = (document.getElementById('product-description') as HTMLTextAreaElement).value;
+    const cost = parseFloat((document.getElementById('product-cost') as HTMLInputElement).value) || 0;
+    const category = (document.getElementById('product-category') as HTMLInputElement).value.trim();
+    const description = (document.getElementById('product-description') as HTMLTextAreaElement).value.trim();
     const previewImg = document.getElementById('product-image-preview') as HTMLImageElement;
+    
+    if (!name) {
+      showToast('El nombre del producto es obligatorio', 'danger');
+      return;
+    }
     
     // Si la vista previa tiene una imagen cargada en base64
     const imageBase64 = previewImg && previewImg.src.startsWith('data:') ? previewImg.src : undefined;
@@ -166,7 +173,7 @@ export class CatalogPage {
         id: this.selectedProductId || '',
         name,
         price,
-        cost: existingProduct?.cost || 0,
+        cost,
         category,
         description,
         available: true,

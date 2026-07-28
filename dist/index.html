@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Aplicación de administración de ventas de comida, finanzas, pedidos activos e historial.">
   <title>FoodAdmin | Control de Ventas de Comida</title>
-  <script type="module" crossorigin src="./assets/index-BDon0pPY.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-4I6MuaP2.css">
+  <script type="module" crossorigin src="./assets/index-D-5dLf1r.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-xW6cEdb1.css">
 </head>
 <body>
 
@@ -654,9 +654,16 @@ create table expenses (
 
         <div class="form-row">
           <div class="form-group">
-            <label for="product-price">Precio ($)</label>
+            <label for="product-price">Precio de Venta ($)</label>
             <input type="number" class="form-input" id="product-price" required min="0" placeholder="Ej: 2000">
           </div>
+          <div class="form-group">
+            <label for="product-cost">Costo de Producción ($)</label>
+            <input type="number" class="form-input" id="product-cost" min="0" placeholder="Ej: 800">
+          </div>
+        </div>
+
+        <div class="form-row">
           <div class="form-group">
             <label for="product-category">Categoría</label>
             <input type="text" class="form-input" id="product-category" placeholder="Ej: Brownies, Cupcakes, Queques">

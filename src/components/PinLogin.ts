@@ -114,6 +114,13 @@ export class PinLogin {
   private handlePhysicalKeyboard(e: KeyboardEvent): void {
     if (!this.isVisible) return;
 
+    // Si el foco está en un campo de texto real, no interferir con la escritura
+    const activeEl = document.activeElement;
+    const isTypingInField = activeEl instanceof HTMLInputElement
+      || activeEl instanceof HTMLTextAreaElement
+      || activeEl instanceof HTMLSelectElement;
+    if (isTypingInField) return;
+
     // Números del 0 al 9
     if (/^\d$/.test(e.key)) {
       this.handleKeyPress(e.key);

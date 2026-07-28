@@ -17,10 +17,12 @@ export class CustomerService {
       throw new Error('El nombre del cliente es obligatorio');
     }
 
-    const existing = data.id ? await this.repo.getById(data.id) : undefined;
+    const id = data.id?.trim() || crypto.randomUUID();
+    const existing = await this.repo.getById(id);
     
     const customer: Customer = {
       ...data,
+      id,
       createdAt: existing ? existing.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

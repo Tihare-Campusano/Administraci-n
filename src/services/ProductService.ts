@@ -13,7 +13,8 @@ export class ProductService {
   }
 
   async saveProduct(data: Omit<Product, 'createdAt' | 'updatedAt'>): Promise<Product> {
-    const existing = data.id ? await this.repo.getById(data.id) : undefined;
+    const id = data.id?.trim() || crypto.randomUUID();
+    const existing = await this.repo.getById(id);
     const now = new Date().toISOString();
     
     if (data.price < 0 || data.cost < 0) {
@@ -22,6 +23,7 @@ export class ProductService {
 
     const product: Product = {
       ...data,
+      id,
       createdAt: existing ? existing.createdAt : now,
       updatedAt: now
     };
