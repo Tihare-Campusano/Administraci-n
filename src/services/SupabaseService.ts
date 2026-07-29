@@ -4,6 +4,7 @@ import { CustomerRepository } from '../repositories/CustomerRepository';
 import { OrderRepository } from '../repositories/OrderRepository';
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
 import { NoteRepository } from '../repositories/NoteRepository';
+import { showToast } from '../components/Toast';
 
 export const DEFAULT_SUPABASE_URL = 'https://atmnawbmvvfjdkkwkdwm.supabase.co';
 export const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0bW5hd2JtdnZmamRra3drZHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxOTQ5MjIsImV4cCI6MjEwMDc3MDkyMn0.UX58TjLoemo6_OlosbUCW3Odm5Y1EW7xrch3kqgE-d8';
@@ -196,11 +197,16 @@ export class SupabaseService {
 
   async syncNowIfConfigured(): Promise<void> {
     try {
-      if (this.client) {
+      const client = this.getClient();
+      if (client) {
         await this.syncWithCloud();
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Auto cloud sync warning:', e);
+      const msg = e?.message || '';
+      if (msg.includes('row-level security') || msg.includes('42501')) {
+        showToast('Supabase bloqueó el guardado (RLS activo). Ejecuta el SQL de desactivación en Supabase.', 'danger');
+      }
     }
   }
 

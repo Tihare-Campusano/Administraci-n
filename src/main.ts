@@ -207,6 +207,14 @@ async function init() {
       loadTabData(currentTab);
     });
 
+    // Asegurar que al hacer clic en cualquier input/textarea/select se otorgue foco directo inmediato
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) {
+        target.focus();
+      }
+    });
+
     setupTabNavigation();
     loadTabData('dashboard');
   } catch (err) {

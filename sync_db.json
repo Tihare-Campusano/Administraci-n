@@ -8,9 +8,9 @@
       "category": "Brownies",
       "available": true,
       "description": "Brownie húmedo con chocolate premium y trozos de nuez.",
-      "createdAt": "2026-07-29T01:02:14.989Z",
-      "updatedAt": "2026-07-29T01:03:25.292Z",
-      "deleted": true
+      "createdAt": "2026-07-29T01:37:25.052Z",
+      "updatedAt": "2026-07-29T01:37:25.052Z",
+      "deleted": false
     },
     {
       "id": "prod_seed_2",
@@ -20,8 +20,8 @@
       "category": "Queques",
       "available": true,
       "description": "Esponjoso queque de zanahoria, nueces y frosting de queso crema.",
-      "createdAt": "2026-07-29T01:02:14.989Z",
-      "updatedAt": "2026-07-29T01:02:14.990Z",
+      "createdAt": "2026-07-29T01:37:25.052Z",
+      "updatedAt": "2026-07-29T01:37:25.053Z",
       "deleted": false
     },
     {
@@ -32,9 +32,9 @@
       "category": "Cupcakes",
       "available": true,
       "description": "Cupcake clásico aterciopelado con crema batida de vainilla.",
-      "createdAt": "2026-07-29T01:02:14.989Z",
-      "updatedAt": "2026-07-29T01:03:27.604Z",
-      "deleted": true
+      "createdAt": "2026-07-29T01:37:25.052Z",
+      "updatedAt": "2026-07-29T01:37:25.054Z",
+      "deleted": false
     },
     {
       "id": "prod_seed_4",
@@ -44,8 +44,8 @@
       "category": "Donas",
       "available": true,
       "description": "Seis mini donas horneadas con cobertura glaseada de colores.",
-      "createdAt": "2026-07-29T01:02:14.989Z",
-      "updatedAt": "2026-07-29T01:02:14.992Z",
+      "createdAt": "2026-07-29T01:37:25.052Z",
+      "updatedAt": "2026-07-29T01:37:25.055Z",
       "deleted": false
     },
     {
@@ -92,9 +92,9 @@
       "phone": "+569 8765 4321",
       "address": "Los Aromos 442",
       "notes": "Portón de madera.",
-      "createdAt": "2026-07-28T01:04:19.626Z",
-      "updatedAt": "2026-07-29T01:29:43.865Z",
-      "deleted": true
+      "createdAt": "2026-07-29T01:37:25.055Z",
+      "updatedAt": "2026-07-29T01:37:25.055Z",
+      "deleted": false
     },
     {
       "id": "cli_seed_2",
@@ -102,9 +102,9 @@
       "phone": "+569 9876 5432",
       "address": "Av. Providencia 1202",
       "notes": "Dejar en conserjería.",
-      "createdAt": "2026-07-28T01:04:19.626Z",
-      "updatedAt": "2026-07-29T01:29:42.547Z",
-      "deleted": true
+      "createdAt": "2026-07-29T01:37:25.055Z",
+      "updatedAt": "2026-07-29T01:37:25.056Z",
+      "deleted": false
     },
     {
       "id": "80ef0059-43b7-46c6-b79a-b8aa30af562d",
