@@ -2,18 +2,21 @@ import { ProductRepository } from '../repositories/ProductRepository';
 import { CustomerRepository } from '../repositories/CustomerRepository';
 import { OrderRepository } from '../repositories/OrderRepository';
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
+import { NoteRepository } from '../repositories/NoteRepository';
 
 export class BackupService {
   private prodRepo = new ProductRepository();
   private custRepo = new CustomerRepository();
   private orderRepo = new OrderRepository();
   private expRepo = new ExpenseRepository();
+  private noteRepo = new NoteRepository();
 
   async exportData(): Promise<string> {
     const products = await this.prodRepo.getAll();
     const customers = await this.custRepo.getAll();
     const orders = await this.orderRepo.getAll();
     const expenses = await this.expRepo.getAll();
+    const notes = await this.noteRepo.getAll();
 
     const data = {
       app: 'FoodAdmin',
@@ -22,7 +25,8 @@ export class BackupService {
       products,
       customers,
       orders,
-      expenses
+      expenses,
+      notes
     };
 
     return JSON.stringify(data, null, 2);
@@ -47,6 +51,11 @@ export class BackupService {
     
     // Overwrite Expenses
     await this.clearAndImportExpenses(data.expenses);
+
+    // Overwrite Notes if present
+    if (data.notes && Array.isArray(data.notes)) {
+      await this.clearAndImportNotes(data.notes);
+    }
   }
 
   private async clearAndImportProducts(items: any[]): Promise<void> {
@@ -86,6 +95,16 @@ export class BackupService {
     }
     for (const item of items) {
       await this.expRepo.save(item);
+    }
+  }
+
+  private async clearAndImportNotes(items: any[]): Promise<void> {
+    const all = await this.noteRepo.getAll();
+    for (const item of all) {
+      await this.noteRepo.delete(item.id);
+    }
+    for (const item of items) {
+      await this.noteRepo.save(item);
     }
   }
 }

@@ -36,7 +36,7 @@ export class DashboardPage {
     const pending = document.getElementById('stats-payments-pending');
 
     if (today) today.textContent = formatMoney(stats.earnedToday);
-    if (month) month.textContent = formatMoney(stats.netProfit); // Shows monthly net profit! Or stats.earnedMonth
+    if (month) month.textContent = formatMoney(stats.earnedMonth);
     if (active) active.textContent = stats.activeOrdersCount.toString();
     if (pending) pending.textContent = formatMoney(stats.pendingCobro);
   }

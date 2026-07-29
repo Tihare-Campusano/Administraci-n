@@ -10,7 +10,6 @@ import { ProductRepository } from './repositories/ProductRepository';
 import { CustomerRepository } from './repositories/CustomerRepository';
 import { NoteRepository } from './repositories/NoteRepository';
 import { OrderRepository } from './repositories/OrderRepository';
-import { Customer } from './models/Customer';
 import { showToast } from './components/Toast';
 import { PinLogin } from './components/PinLogin';
 import { SecurityService } from './services/SecurityService';
@@ -101,67 +100,30 @@ async function updateBadge() {
   }
 }
 
-async function seedDatabaseIfEmpty() {
-  const products = await productRepository.getAll();
-  const customers = await customerRepository.getAll();
-  const notes = await noteRepository.getAll();
+async function cleanupOldSeedData() {
+  try {
+    const customers = await customerRepository.getAll();
+    for (const c of customers) {
+      if (c.id.startsWith('cli_seed_')) await customerRepository.delete(c.id);
+    }
 
-  if (products.length === 0) {
-    const dummyProducts = [
-      { id: 'prod_seed_1', name: 'Brownie de Chocolate Fudge', price: 2000, cost: 800, category: 'Brownies', available: true, description: 'Brownie húmedo con chocolate premium y trozos de nuez.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-      { id: 'prod_seed_2', name: 'Queque Zanahoria-Nuez', price: 4500, cost: 1800, category: 'Queques', available: true, description: 'Esponjoso queque de zanahoria, nueces y frosting de queso crema.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-      { id: 'prod_seed_3', name: 'Cupcake de Red Velvet', price: 1800, cost: 600, category: 'Cupcakes', available: true, description: 'Cupcake clásico aterciopelado con crema batida de vainilla.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-      { id: 'prod_seed_4', name: 'Caja de 6 Mini Donitas', price: 3500, cost: 1200, category: 'Donas', available: true, description: 'Seis mini donas horneadas con cobertura glaseada de colores.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-    ];
-    for (const p of dummyProducts) await productRepository.save(p);
-  }
+    const products = await productRepository.getAll();
+    for (const p of products) {
+      if (p.id.startsWith('prod_seed_')) await productRepository.delete(p.id);
+    }
 
-  if (customers.length === 0) {
-    const dummyCustomers: Customer[] = [
-      { id: 'cli_seed_1', name: 'Claudio Martínez', phone: '+569 8765 4321', address: 'Los Aromos 442', notes: 'Portón de madera.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), deleted: false },
-      { id: 'cli_seed_2', name: 'Tihare Campusano', phone: '+569 9876 5432', address: 'Av. Providencia 1202', notes: 'Dejar en conserjería.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), deleted: false }
-    ];
-    for (const c of dummyCustomers) await customerRepository.save(c);
-  }
-
-  if (notes.length === 0) {
-    const dummyNotes = [
-      {
-        id: 'note_seed_1',
-        title: 'Lista de Insumos Semanales',
-        category: 'Compras',
-        color: '#ec4899',
-        content: 'Recordar pedir la harina antes del jueves.',
-        isPinned: true,
-        items: [
-          { id: 'item_1', text: '20kg Harina de repostería', completed: true },
-          { id: 'item_2', text: '5kg Manjar pastelero', completed: false },
-          { id: 'item_3', text: '2kg Chocolate belga 70%', completed: false }
-        ],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        deleted: false
-      },
-      {
-        id: 'note_seed_2',
-        title: 'Receta Frosting Queso Crema',
-        category: 'Recetas',
-        color: '#3b82f6',
-        content: '250g queso crema helado\n120g mantequilla sin sal\n400g azúcar flor tamizada\n1 cda extracto de vainilla pura.',
-        isPinned: false,
-        items: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        deleted: false
-      }
-    ];
-    for (const n of dummyNotes) await noteRepository.save(n);
+    const notes = await noteRepository.getAll();
+    for (const n of notes) {
+      if (n.id.startsWith('note_seed_')) await noteRepository.delete(n.id);
+    }
+  } catch (e) {
+    // Silent fail if clean
   }
 }
 
 async function init() {
   try {
-    await seedDatabaseIfEmpty();
+    await cleanupOldSeedData();
     
     // Initialize components and pages
     dashboardPage.init(() => orderModal.open());
@@ -194,14 +156,6 @@ async function init() {
     if (isSecurityActive) {
       pinLogin.show('lock');
     }
-
-    // Asegurar que al hacer clic en cualquier input/textarea/select se otorgue foco directo inmediato
-    document.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) {
-        target.focus();
-      }
-    });
 
     setupTabNavigation();
     loadTabData('dashboard');

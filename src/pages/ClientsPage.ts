@@ -137,9 +137,8 @@ export class ClientsPage {
       if (this.onClientAddedCallback) {
         this.onClientAddedCallback(client.id);
         this.onClientAddedCallback = null; // reset
-      } else {
-        this.load();
       }
+      await this.load();
     } catch (err: any) {
       showToast(err.message || 'Error al guardar cliente', 'danger');
     }

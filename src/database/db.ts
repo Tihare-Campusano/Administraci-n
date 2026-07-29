@@ -1,9 +1,20 @@
 const DB_NAME = 'FoodAdminDB';
 const DB_VERSION = 4; // Incremented version to add notes store
 
+let dbInstance: IDBDatabase | null = null;
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 export function openDB(): Promise<IDBDatabase> {
+  if (dbInstance) {
+    try {
+      if (dbInstance.objectStoreNames) {
+        return Promise.resolve(dbInstance);
+      }
+    } catch (e) {
+      dbInstance = null;
+    }
+  }
+
   if (dbPromise) {
     return dbPromise;
   }
@@ -14,14 +25,22 @@ export function openDB(): Promise<IDBDatabase> {
     request.onerror = (event) => {
       console.error('Database open error:', (event.target as IDBOpenDBRequest).error);
       dbPromise = null;
+      dbInstance = null;
       reject((event.target as IDBOpenDBRequest).error);
     };
 
     request.onsuccess = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
+      dbInstance = db;
 
       db.onversionchange = () => {
         db.close();
+        dbInstance = null;
+        dbPromise = null;
+      };
+
+      db.onclose = () => {
+        dbInstance = null;
         dbPromise = null;
       };
 
