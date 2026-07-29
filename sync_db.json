@@ -8,8 +8,8 @@
       "category": "Brownies",
       "available": true,
       "description": "Brownie húmedo con chocolate premium y trozos de nuez.",
-      "createdAt": "2026-07-28T00:33:51.826Z",
-      "updatedAt": "2026-07-28T00:35:11.029Z",
+      "createdAt": "2026-07-29T01:02:14.989Z",
+      "updatedAt": "2026-07-29T01:03:25.292Z",
       "deleted": true
     },
     {
@@ -20,9 +20,9 @@
       "category": "Queques",
       "available": true,
       "description": "Esponjoso queque de zanahoria, nueces y frosting de queso crema.",
-      "createdAt": "2026-07-28T00:33:51.826Z",
-      "updatedAt": "2026-07-28T00:35:13.305Z",
-      "deleted": true
+      "createdAt": "2026-07-29T01:02:14.989Z",
+      "updatedAt": "2026-07-29T01:02:14.990Z",
+      "deleted": false
     },
     {
       "id": "prod_seed_3",
@@ -32,8 +32,8 @@
       "category": "Cupcakes",
       "available": true,
       "description": "Cupcake clásico aterciopelado con crema batida de vainilla.",
-      "createdAt": "2026-07-28T00:33:51.826Z",
-      "updatedAt": "2026-07-28T00:46:37.015Z",
+      "createdAt": "2026-07-29T01:02:14.989Z",
+      "updatedAt": "2026-07-29T01:03:27.604Z",
       "deleted": true
     },
     {
@@ -44,9 +44,9 @@
       "category": "Donas",
       "available": true,
       "description": "Seis mini donas horneadas con cobertura glaseada de colores.",
-      "createdAt": "2026-07-28T00:33:51.826Z",
-      "updatedAt": "2026-07-28T00:47:54.567Z",
-      "deleted": true
+      "createdAt": "2026-07-29T01:02:14.989Z",
+      "updatedAt": "2026-07-29T01:02:14.992Z",
+      "deleted": false
     },
     {
       "id": "",
@@ -93,8 +93,8 @@
       "address": "Los Aromos 442",
       "notes": "Portón de madera.",
       "createdAt": "2026-07-28T01:04:19.626Z",
-      "updatedAt": "2026-07-28T01:04:19.626Z",
-      "deleted": false
+      "updatedAt": "2026-07-29T01:29:43.865Z",
+      "deleted": true
     },
     {
       "id": "cli_seed_2",
@@ -103,8 +103,8 @@
       "address": "Av. Providencia 1202",
       "notes": "Dejar en conserjería.",
       "createdAt": "2026-07-28T01:04:19.626Z",
-      "updatedAt": "2026-07-28T01:04:19.627Z",
-      "deleted": false
+      "updatedAt": "2026-07-29T01:29:42.547Z",
+      "deleted": true
     },
     {
       "id": "80ef0059-43b7-46c6-b79a-b8aa30af562d",

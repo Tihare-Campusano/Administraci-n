@@ -1,8 +1,10 @@
 import { NoteRepository } from '../repositories/NoteRepository';
+import { SupabaseService } from './SupabaseService';
 import { Note } from '../models/Note';
 
 export class NoteService {
   private noteRepo = new NoteRepository();
+  private supabaseService = new SupabaseService();
 
   async getAllNotes(): Promise<Note[]> {
     const notes = await this.noteRepo.getAll();
@@ -51,14 +53,18 @@ export class NoteService {
       };
     }
 
-    return await this.noteRepo.save(noteToSave);
+    const saved = await this.noteRepo.save(noteToSave);
+    await this.supabaseService.syncNowIfConfigured();
+    return saved;
   }
 
   async togglePinNote(id: string): Promise<void> {
     const note = await this.noteRepo.getById(id);
     if (note) {
       note.isPinned = !note.isPinned;
+      note.updatedAt = new Date().toISOString();
       await this.noteRepo.save(note);
+      await this.supabaseService.syncNowIfConfigured();
     }
   }
 
@@ -68,12 +74,15 @@ export class NoteService {
       const item = note.items.find(i => i.id === itemId);
       if (item) {
         item.completed = !item.completed;
+        note.updatedAt = new Date().toISOString();
         await this.noteRepo.save(note);
+        await this.supabaseService.syncNowIfConfigured();
       }
     }
   }
 
   async deleteNote(id: string): Promise<void> {
     await this.noteRepo.delete(id);
+    await this.supabaseService.syncNowIfConfigured();
   }
 }

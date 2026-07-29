@@ -1,11 +1,13 @@
 import { NoteService } from '../services/NoteService';
-import { CheckItem, Note } from '../models/Note';
+import { CheckItem } from '../models/Note';
 import { showToast } from '../components/Toast';
 
 export class NotesPage {
   private noteService = new NoteService();
   private selectedNoteId: string | null = null;
   private currentTasks: CheckItem[] = [];
+
+  private activeCategory = 'all';
 
   init(): void {
     document.getElementById('notes-new-btn')?.addEventListener('click', () => this.openModal());
@@ -15,7 +17,16 @@ export class NotesPage {
     document.getElementById('btn-add-task-item')?.addEventListener('click', () => this.addTaskInputRow());
 
     document.getElementById('notes-search')?.addEventListener('input', () => this.load());
-    document.getElementById('notes-filter-category')?.addEventListener('change', () => this.load());
+
+    // Samsung Pills category click handler
+    document.querySelectorAll('.samsung-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.samsung-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        this.activeCategory = pill.getAttribute('data-cat') || 'all';
+        this.load();
+      });
+    });
 
     const modalOverlay = document.getElementById('modal-note');
     modalOverlay?.addEventListener('click', (e) => {
@@ -27,16 +38,17 @@ export class NotesPage {
     const grid = document.getElementById('notes-grid');
     if (!grid) return;
 
-    grid.innerHTML = '<div class="empty-state">Cargando notas...</div>';
+    grid.innerHTML = '<div class="empty-state">Cargando Samsung Notes...</div>';
 
     try {
       let notes = await this.noteService.getAllNotes();
 
       const searchVal = (document.getElementById('notes-search') as HTMLInputElement)?.value.toLowerCase().trim() || '';
-      const catVal = (document.getElementById('notes-filter-category') as HTMLSelectElement)?.value || 'all';
 
-      if (catVal !== 'all') {
-        notes = notes.filter(n => n.category.toLowerCase() === catVal.toLowerCase());
+      if (this.activeCategory === 'pinned') {
+        notes = notes.filter(n => n.isPinned);
+      } else if (this.activeCategory !== 'all') {
+        notes = notes.filter(n => n.category.toLowerCase() === this.activeCategory.toLowerCase());
       }
 
       if (searchVal) {
@@ -54,7 +66,7 @@ export class NotesPage {
 
       this.renderNotesGrid(grid, notes);
     } catch (err) {
-      grid.innerHTML = '<div class="empty-state">Error al cargar bloc de notas.</div>';
+      grid.innerHTML = '<div class="empty-state">Error al cargar Samsung Notes.</div>';
     }
   }
 
@@ -62,48 +74,57 @@ export class NotesPage {
     grid.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        <h3>No tienes notas registradas</h3>
+        <h3>No hay notas en esta categoría</h3>
         <p>Crea tu primera nota o lista de tareas haciendo clic en "+ Nueva Nota".</p>
       </div>
     `;
   }
 
-  private renderNotesGrid(grid: HTMLElement, notes: Note[]): void {
+  private renderNotesGrid(grid: HTMLElement, notes: any[]): void {
     grid.innerHTML = notes.map(note => {
-      const formattedDate = new Date(note.updatedAt).toLocaleDateString('es-ES', {
+      const updatedAt = note.updatedAt || note.updated_at || note.createdAt || note.created_at || new Date().toISOString();
+      const formattedDate = new Date(updatedAt).toLocaleDateString('es-ES', {
         day: '2-digit',
         month: 'short',
         hour: '2-digit',
         minute: '2-digit'
       });
 
-      const checklistHtml = note.items && note.items.length > 0 ? `
+      const itemsList = Array.isArray(note.items) ? note.items : (Array.isArray(note.checklist) ? note.checklist : []);
+      const title = note.title || 'Nota sin título';
+      const category = note.category || 'General';
+      const isPinned = note.isPinned || note.is_pinned || false;
+      const color = note.color || 'var(--accent)';
+      const content = note.content || '';
+      const id = note.id || '';
+
+      const checklistHtml = itemsList.length > 0 ? `
         <div class="note-checklist">
-          ${note.items.map(item => `
-            <label class="checklist-item ${item.completed ? 'completed' : ''}" data-note-id="${note.id}" data-item-id="${item.id}">
-              <input type="checkbox" ${item.completed ? 'checked' : ''} class="note-task-checkbox" data-note-id="${note.id}" data-item-id="${item.id}">
-              <span>${item.text}</span>
+          ${itemsList.map((item: any) => `
+            <label class="checklist-item ${item.completed ? 'completed' : ''}" data-note-id="${id}" data-item-id="${item.id}">
+              <input type="checkbox" ${item.completed ? 'checked' : ''} class="note-task-checkbox" data-note-id="${id}" data-item-id="${item.id}">
+              <span>${item.text || ''}</span>
             </label>
           `).join('')}
         </div>
       ` : '';
 
       return `
-        <div class="glass-card note-card ${note.isPinned ? 'pinned' : ''}" style="border-left-color: ${note.color || 'var(--accent)'};">
+        <div class="samsung-note-card ${isPinned ? 'pinned' : ''}" style="border-top-color: ${color};">
           <div class="note-header">
-            <span class="note-category-badge">${note.category}</span>
-            <button class="note-pin-btn ${note.isPinned ? 'active' : ''}" data-id="${note.id}" title="${note.isPinned ? 'Desmarcar destacada' : 'Destacar nota'}">
-              ${note.isPinned ? '⭐' : '☆'}
+            <span class="note-category-badge">${category}</span>
+            <button class="note-pin-btn ${isPinned ? 'active' : ''}" data-id="${id}" title="${isPinned ? 'Desmarcar destacada' : 'Destacar nota'}">
+              ${isPinned ? '⭐' : '☆'}
             </button>
           </div>
-          <h3 class="note-title">${note.title}</h3>
-          ${note.content ? `<p class="note-content-preview">${note.content}</p>` : ''}
+          <h3 class="note-title">${title}</h3>
+          ${content ? `<p class="note-content-preview">${content}</p>` : ''}
           ${checklistHtml}
           <div class="note-footer">
             <span>📅 ${formattedDate}</span>
             <div class="note-actions">
-              <button class="btn btn-secondary btn-sm edit-note-btn" data-id="${note.id}">Editar</button>
-              <button class="btn btn-danger btn-sm delete-note-btn" data-id="${note.id}">Borrar</button>
+              <button class="btn btn-secondary btn-sm edit-note-btn" data-id="${id}">Editar</button>
+              <button class="btn btn-danger btn-sm delete-note-btn" data-id="${id}">Borrar</button>
             </div>
           </div>
         </div>

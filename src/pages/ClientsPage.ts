@@ -47,22 +47,29 @@ export class ClientsPage {
   }
 
   private renderClientsList(grid: HTMLElement, clients: any[]): void {
-    grid.innerHTML = clients.map(client => `
-      <div class="glass-card catalog-card">
-        <div class="catalog-card-header">
-          <span class="catalog-card-badge">Cliente Frecuente</span>
+    grid.innerHTML = clients.map(client => {
+      const name = client.name || 'Cliente sin nombre';
+      const phone = client.phone || 'No registrado';
+      const notes = client.notes || client.address || 'No registrada';
+      const id = client.id || '';
+
+      return `
+        <div class="glass-card catalog-card">
+          <div class="catalog-card-header">
+            <span class="catalog-card-badge">Cliente Frecuente</span>
+          </div>
+          <h3 class="catalog-card-title">${name}</h3>
+          <p class="catalog-card-desc">
+            <strong>📞 Teléfono:</strong> ${phone}<br>
+            <strong>📍 Info/Dirección:</strong> ${notes}
+          </p>
+          <div class="catalog-card-footer">
+            <button class="btn btn-secondary btn-sm edit-client-btn" data-id="${id}">Editar</button>
+            <button class="btn btn-danger btn-sm delete-client-btn" data-id="${id}">Borrar</button>
+          </div>
         </div>
-        <h3 class="catalog-card-title">${client.name}</h3>
-        <p class="catalog-card-desc">
-          <strong>📞 Teléfono:</strong> ${client.phone || 'No registrado'}<br>
-          <strong>📍 Info/Dirección:</strong> ${client.notes || 'No registrada'}
-        </p>
-        <div class="catalog-card-footer">
-          <button class="btn btn-secondary btn-sm edit-client-btn" data-id="${client.id}">Editar</button>
-          <button class="btn btn-danger btn-sm delete-client-btn" data-id="${client.id}">Borrar</button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     this.bindActionButtons();
   }

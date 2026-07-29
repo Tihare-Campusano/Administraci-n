@@ -50,25 +50,31 @@ export class ActiveOrdersPage {
 
   private renderOrders(grid: HTMLElement, activeOrders: any[], custMap: Map<string, string>): void {
     grid.innerHTML = activeOrders.map(order => {
-      const itemsMarkup = order.products.map((item: any) => `
+      const productsList = Array.isArray(order.products) ? order.products : [];
+      const itemsMarkup = productsList.map((item: any) => `
         <div class="order-item-row">
-          <span class="item-qty-name">${item.quantity}x ${item.name}</span>
-          <span class="item-price">${formatMoney(item.price * item.quantity)}</span>
+          <span class="item-qty-name">${item.quantity || 1}x ${item.name || 'Producto'}</span>
+          <span class="item-price">${formatMoney((item.price || 0) * (item.quantity || 1))}</span>
         </div>
-      `).join('');
+      `).join('') || '<div class="order-item-row"><span class="item-qty-name">Sin productos</span></div>';
 
-      const paymentBadge = order.paymentStatus === 'paid'
+      const paymentStatus = order.paymentStatus || order.payment_status || 'unpaid';
+      const paymentBadge = paymentStatus === 'paid'
         ? '<span class="order-status-badge status-paid">Pagado</span>'
         : '<span class="order-status-badge status-unpaid">Pendiente</span>';
       
-      const clientName = custMap.get(order.customerId) || 'Cliente Desconocido';
+      const customerId = order.customerId || order.customer_id || '';
+      const clientName = custMap.get(customerId) || 'Cliente General';
+      const orderNum = order.orderNumber || order.order_number || 'S/N';
+      const createdAt = order.createdAt || order.created_at || new Date().toISOString();
+      const total = order.total || 0;
 
       return `
-        <div class="glass-card order-card ${order.paymentStatus}" id="order-card-${order.id}">
+        <div class="glass-card order-card ${paymentStatus}" id="order-card-${order.id}">
           <div class="order-header">
             <div class="order-meta">
-              <span class="order-num">Pedido #${order.orderNumber}</span>
-              <span class="order-time">${formatDate(order.createdAt)}</span>
+              <span class="order-num">Pedido #${orderNum}</span>
+              <span class="order-time">${formatDate(createdAt)}</span>
             </div>
             ${paymentBadge}
           </div>
@@ -78,10 +84,10 @@ export class ActiveOrdersPage {
           <div class="order-summary">
             <div>
               <span class="order-total-label">Total c/envío:</span>
-              <div class="order-total-val">${formatMoney(order.total)}</div>
+              <div class="order-total-val">${formatMoney(total)}</div>
             </div>
             <div class="order-actions-row">
-              <button class="btn btn-secondary btn-sm toggle-payment-btn" data-id="${order.id}">${order.paymentStatus === 'paid' ? 'Deber' : 'Cobrar'}</button>
+              <button class="btn btn-secondary btn-sm toggle-payment-btn" data-id="${order.id}">${paymentStatus === 'paid' ? 'Deber' : 'Cobrar'}</button>
               <button class="btn btn-primary btn-sm complete-order-btn" data-id="${order.id}">Listo ✅</button>
             </div>
           </div>

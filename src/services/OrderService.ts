@@ -1,8 +1,10 @@
 import { OrderRepository } from '../repositories/OrderRepository';
+import { SupabaseService } from './SupabaseService';
 import { Order, OrderItem } from '../models/Order';
 
 export class OrderService {
   private repo = new OrderRepository();
+  private supabaseService = new SupabaseService();
 
   async getAllOrders(): Promise<Order[]> {
     return this.repo.getAll();
@@ -47,11 +49,15 @@ export class OrderService {
       updatedAt: new Date().toISOString()
     };
 
-    return this.repo.save(newOrder);
+    const saved = await this.repo.save(newOrder);
+    await this.supabaseService.syncNowIfConfigured();
+    return saved;
   }
 
   async updateOrder(order: Order): Promise<Order> {
-    return this.repo.save(order);
+    const saved = await this.repo.save(order);
+    await this.supabaseService.syncNowIfConfigured();
+    return saved;
   }
 
   async completeOrder(id: string): Promise<Order> {
@@ -60,7 +66,10 @@ export class OrderService {
 
     order.status = 'completed';
     order.completedAt = new Date().toISOString();
-    return this.repo.save(order);
+    order.updatedAt = new Date().toISOString();
+    const saved = await this.repo.save(order);
+    await this.supabaseService.syncNowIfConfigured();
+    return saved;
   }
 
   async cancelOrder(id: string): Promise<Order> {
@@ -69,7 +78,10 @@ export class OrderService {
 
     order.status = 'cancelled';
     order.completedAt = new Date().toISOString();
-    return this.repo.save(order);
+    order.updatedAt = new Date().toISOString();
+    const saved = await this.repo.save(order);
+    await this.supabaseService.syncNowIfConfigured();
+    return saved;
   }
 
   async togglePaymentStatus(id: string): Promise<Order> {
@@ -77,10 +89,14 @@ export class OrderService {
     if (!order) throw new Error('Pedido no encontrado');
 
     order.paymentStatus = order.paymentStatus === 'paid' ? 'unpaid' : 'paid';
-    return this.repo.save(order);
+    order.updatedAt = new Date().toISOString();
+    const saved = await this.repo.save(order);
+    await this.supabaseService.syncNowIfConfigured();
+    return saved;
   }
 
   async deleteOrderRecord(id: string): Promise<void> {
-    return this.repo.delete(id);
+    await this.repo.delete(id);
+    await this.supabaseService.syncNowIfConfigured();
   }
 }

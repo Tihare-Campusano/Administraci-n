@@ -277,40 +277,44 @@
 
       <div class="catalog-grid" id="clients-grid">
         <!-- Dynamically populated clients cards -->
-    <!-- 6. NOTES (NOTION STYLE) VIEW -->
+      </div>
+    </section>
+
+    <!-- 6. SAMSUNG NOTES STYLE VIEW -->
     <section id="notes" class="tab-content">
       <header>
         <div class="header-title">
-          <h1>Bloc de Notas y Tareas</h1>
-          <p>Organiza tus pendientes, recetas e ideas en listas interactivas</p>
+          <h1>Samsung Notes</h1>
+          <p>Organiza tus notas, recetas y listas de tareas con diseño Samsung</p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-primary" id="notes-new-btn">
+          <button class="btn btn-primary" id="notes-new-btn" style="border-radius: 20px; padding: 10px 22px;">
             <span>+ Nueva Nota</span>
           </button>
         </div>
       </header>
 
-      <!-- Table / Search Filters for Notes -->
-      <div class="glass-card table-controls">
-        <div class="search-input-wrapper">
+      <!-- Search & Folder Categories (Samsung Style) -->
+      <div class="glass-card" style="padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
+        <div class="search-input-wrapper" style="max-width: 100%;">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input type="text" class="search-input" id="notes-search" placeholder="Buscar por título, contenido o tareas...">
+          <input type="text" class="search-input" id="notes-search" placeholder="Buscar notas, listas de tareas o palabras clave..." style="border-radius: 20px;">
         </div>
-        <div class="filter-group">
-          <select class="select-input" id="notes-filter-category">
-            <option value="all">Todas las Categorías</option>
-            <option value="General">General</option>
-            <option value="Tareas">Tareas</option>
-            <option value="Ideas">Ideas</option>
-            <option value="Recetas">Recetas</option>
-            <option value="Compras">Compras</option>
-          </select>
+
+        <!-- Samsung Category Pills -->
+        <div class="samsung-pills-bar" id="samsung-pills-bar">
+          <button class="samsung-pill active" data-cat="all">Todas</button>
+          <button class="samsung-pill" data-cat="pinned">⭐ Destacadas</button>
+          <button class="samsung-pill" data-cat="General">General</button>
+          <button class="samsung-pill" data-cat="Tareas">Tareas</button>
+          <button class="samsung-pill" data-cat="Ideas">Ideas</button>
+          <button class="samsung-pill" data-cat="Recetas">Recetas</button>
+          <button class="samsung-pill" data-cat="Compras">Compras</button>
         </div>
       </div>
 
-      <div class="notes-grid" id="notes-grid">
-        <!-- Dynamically populated notes cards -->
+      <div class="samsung-notes-grid" id="notes-grid">
+        <!-- Dynamically populated Samsung Notes cards -->
       </div>
     </section>
 
@@ -349,46 +353,22 @@
           </div>
         </div>
 
-        <!-- Sync Card Simplificada -->
-        <div class="glass-card" id="sync-settings-card">
-          <h2 class="card-title" style="margin-bottom: 10px;">Sincronización Local</h2>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Sincroniza tus ventas, catálogo de productos y directorio de clientes entre tus dispositivos en la misma red local en tiempo real.</p>
-          
-          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;">
-            <button class="btn btn-primary" id="btn-sync-now" style="padding: 10px 20px; font-weight: 600;">Sincronizar Ahora</button>
-            <span id="sync-status-msg" style="font-size: 0.85rem; color: var(--text-secondary);">Listo para sincronizar</span>
+        <!-- Visual Supabase Status Card -->
+        <div class="glass-card" id="supabase-settings-card" style="border-color: rgba(16, 185, 129, 0.25); background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(19, 27, 46, 0.4) 100%);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h2 class="card-title" style="margin: 0; color: #10b981; display: flex; align-items: center; gap: 8px; font-size: 1.1rem;">
+              <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981;"></span>
+              Base de Datos Nube (Supabase PostgreSQL)
+            </h2>
+            <span class="order-status-badge status-paid" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Conectado ✅</span>
           </div>
-
-          <!-- Guía automatizada -->
-          <div style="border-top: 1px solid var(--border-glass); padding-top: 15px; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; line-height: 1.5;">
-            <span style="font-weight: 700; color: var(--accent); display: block;">¿Cómo conectar otra PC o Celular?</span>
-            <ul style="color: var(--text-secondary); margin-left: 1.2rem; display: flex; flex-direction: column; gap: 6px;">
-              <li>En tu PC principal, abre la app desde el acceso directo.</li>
-              <li>En la PC de tu pareja o tu celular (conectados al mismo WiFi), abre el navegador web e ingresa a: <strong id="sync-quick-url" style="color: var(--text-primary); font-family: monospace;">http://...</strong></li>
-              <li>¡Listo! Ambos dispositivos compartirán la misma información automáticamente en segundo plano.</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Supabase Cloud Sync Card -->
-        <div class="glass-card" id="supabase-settings-card" style="border-color: rgba(16, 185, 129, 0.15);">
-          <h2 class="card-title" style="margin-bottom: 10px; color: #10b981;">Nube (Supabase Cloud Sync)</h2>
-          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.2rem;">Sincroniza tus datos de forma segura en internet para acceder desde cualquier red o dispositivo.</p>
-          
-          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem;">
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <label for="supabase-url" style="font-size: 0.85rem; color: var(--text-secondary);">Supabase Project URL</label>
-              <input type="text" id="supabase-url" class="form-input" placeholder="Ej: https://abcde12345.supabase.co" style="padding: 6px 10px; font-size: 0.9rem;">
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <label for="supabase-key" style="font-size: 0.85rem; color: var(--text-secondary);">Supabase Anon Key</label>
-              <input type="password" id="supabase-key" class="form-input" placeholder="Ingresa la clave anon_key de tu proyecto..." style="padding: 6px 10px; font-size: 0.9rem;">
-            </div>
-          </div>
-          
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
-            <button class="btn btn-secondary" id="btn-supabase-test" style="border-color: rgba(16, 185, 129, 0.3); color: #10b981;">Probar y Conectar</button>
-            <span id="supabase-status-msg" style="font-size: 0.85rem; color: var(--text-secondary);">Desconectado</span>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">
+            Tu aplicación está conectada directamente a la base de datos remota en la nube. Todas las ventas, productos, clientes, egresos y notas se sincronizan automáticamente.
+          </p>
+          <div style="display: flex; gap: 15px; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted); background: rgba(0, 0, 0, 0.2); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-glass);">
+            <span>🌐 <strong>Proyecto:</strong> atmnawbmvvfjdkkwkdwm</span>
+            <span>⚡ <strong>Motor:</strong> PostgreSQL 15</span>
+            <span>🔒 <strong>Estado:</strong> Cloud Realtime</span>
           </div>
         </div>
 

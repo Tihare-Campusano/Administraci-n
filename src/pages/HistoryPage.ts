@@ -55,20 +55,27 @@ export class HistoryPage {
   }
 
   private applyFilters(orders: any[], custMap: Map<string, string>): any[] {
-    // Sort newest first
-    const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const sorted = [...orders].sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.created_at || 0).getTime();
+      const dateB = new Date(b.createdAt || b.created_at || 0).getTime();
+      return dateB - dateA;
+    });
     
     return sorted.filter(order => {
-      const name = (custMap.get(order.customerId) || '').toLowerCase();
-      const matchesSearch = name.includes(this.searchQuery) || order.orderNumber.toString().includes(this.searchQuery);
+      const customerId = order.customerId || order.customer_id || '';
+      const orderNumber = (order.orderNumber || order.order_number || '').toString();
+      const name = (custMap.get(customerId) || '').toLowerCase();
+      const matchesSearch = name.includes(this.searchQuery) || orderNumber.includes(this.searchQuery);
       
+      const paymentStatus = order.paymentStatus || order.payment_status || 'unpaid';
       let matchesPayment = true;
-      if (this.paymentFilter === 'paid') matchesPayment = order.paymentStatus === 'paid';
-      else if (this.paymentFilter === 'unpaid') matchesPayment = order.paymentStatus === 'unpaid';
+      if (this.paymentFilter === 'paid') matchesPayment = paymentStatus === 'paid';
+      else if (this.paymentFilter === 'unpaid') matchesPayment = paymentStatus === 'unpaid';
 
       let matchesDate = true;
       if (this.dateFilter !== 'all') {
-        const orderDate = new Date(order.createdAt);
+        const createdAt = order.createdAt || order.created_at || new Date().toISOString();
+        const orderDate = new Date(createdAt);
         const today = new Date();
         if (this.dateFilter === 'today') {
           matchesDate = orderDate.toDateString() === today.toDateString();
@@ -87,25 +94,32 @@ export class HistoryPage {
 
   private renderTable(tbody: HTMLElement, orders: any[], custMap: Map<string, string>): void {
     tbody.innerHTML = orders.map(order => {
-      const itemsString = order.products.map((p: any) => `${p.quantity}x ${p.name}`).join(', ');
-      const clientName = custMap.get(order.customerId) || 'Cliente Desconocido';
+      const productsList = Array.isArray(order.products) ? order.products : [];
+      const itemsString = productsList.map((p: any) => `${p.quantity || 1}x ${p.name || 'Producto'}`).join(', ') || 'Sin productos';
+      const customerId = order.customerId || order.customer_id || '';
+      const clientName = custMap.get(customerId) || 'Cliente General';
+      const orderNum = order.orderNumber || order.order_number || 'S/N';
+      const createdAt = order.createdAt || order.created_at || new Date().toISOString();
+      const paymentStatus = order.paymentStatus || order.payment_status || 'unpaid';
+      const status = order.status || 'pending';
+      const total = order.total || 0;
       
       let statusBadge = '';
-      if (order.status === 'cancelled') {
+      if (status === 'cancelled') {
         statusBadge = '<span class="order-status-badge status-unpaid" style="background:rgba(239,68,68,0.08); color:var(--danger)">Cancelado</span>';
       } else {
-        statusBadge = order.paymentStatus === 'paid'
+        statusBadge = paymentStatus === 'paid'
           ? '<span class="order-status-badge status-paid" style="cursor:pointer;">Pagado</span>'
           : '<span class="order-status-badge status-unpaid" style="cursor:pointer; background:rgba(245,158,11,0.08); color:var(--warning)">Pendiente</span>';
       }
 
       return `
         <tr>
-          <td><strong>#${order.orderNumber}</strong></td>
-          <td>${formatDate(order.createdAt)}</td>
+          <td><strong>#${orderNum}</strong></td>
+          <td>${formatDate(createdAt)}</td>
           <td>${clientName}</td>
           <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${itemsString}">${itemsString}</td>
-          <td><strong>${formatMoney(order.total)}</strong></td>
+          <td><strong>${formatMoney(total)}</strong></td>
           <td><div class="payment-badge-click" data-id="${order.id}">${statusBadge}</div></td>
           <td>
             <button class="btn btn-danger btn-sm delete-history-btn" data-id="${order.id}" style="padding:4px 8px; font-size:0.75rem;">Eliminar</button>

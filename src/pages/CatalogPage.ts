@@ -67,31 +67,40 @@ export class CatalogPage {
   }
 
   private renderProductsList(grid: HTMLElement, products: any[]): void {
-    grid.innerHTML = products.map(product => `
-      <div class="glass-card catalog-card" style="display: flex; flex-direction: column; overflow: hidden; padding: 0; min-height: 310px; transition: var(--transition-smooth);">
-        ${product.image ? `
-        <div style="width: 100%; height: 140px; overflow: hidden; border-bottom: 1px solid var(--border-glass); background: #000; position: relative;">
-          <img src="${product.image}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
-        </div>
-        ` : `
-        <div style="width: 100%; height: 90px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(19, 27, 46, 0.15) 100%); border-bottom: 1px solid var(--border-glass);">
-          <span style="font-size: 1.8rem; filter: opacity(0.75);">🧁</span>
-        </div>
-        `}
-        <div style="padding: 15px; display: flex; flex-direction: column; flex-grow: 1; gap: 8px;">
-          <div class="catalog-card-header" style="margin: 0; padding: 0; display: flex; justify-content: space-between; align-items: center;">
-            <span class="catalog-card-badge">${product.category || 'Sin Categoría'}</span>
-            <span class="catalog-card-price">${formatMoney(product.price)}</span>
+    grid.innerHTML = products.map(product => {
+      const name = product.name || 'Producto sin nombre';
+      const category = product.category || 'General';
+      const price = product.price || 0;
+      const description = product.description || 'Sin descripción';
+      const image = product.image || product.image_url || '';
+      const id = product.id || '';
+
+      return `
+        <div class="glass-card catalog-card" style="display: flex; flex-direction: column; overflow: hidden; padding: 0; min-height: 310px; transition: var(--transition-smooth);">
+          ${image ? `
+          <div style="width: 100%; height: 140px; overflow: hidden; border-bottom: 1px solid var(--border-glass); background: #000; position: relative;">
+            <img src="${image}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
           </div>
-          <h3 class="catalog-card-title" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">${product.name}</h3>
-          <p class="catalog-card-desc" style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 38px; flex-grow: 1;">${product.description || 'Sin descripción'}</p>
-          <div class="catalog-card-footer" style="margin-top: 8px; padding: 0; display: flex; gap: 8px; justify-content: flex-end;">
-            <button class="btn btn-secondary btn-sm edit-product-btn" data-id="${product.id}" style="padding: 4px 10px; font-size: 0.75rem;">Editar</button>
-            <button class="btn btn-danger btn-sm delete-product-btn" data-id="${product.id}" style="padding: 4px 10px; font-size: 0.75rem;">Borrar</button>
+          ` : `
+          <div style="width: 100%; height: 90px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(19, 27, 46, 0.15) 100%); border-bottom: 1px solid var(--border-glass);">
+            <span style="font-size: 1.8rem; filter: opacity(0.75);">🧁</span>
+          </div>
+          `}
+          <div style="padding: 15px; display: flex; flex-direction: column; flex-grow: 1; gap: 8px;">
+            <div class="catalog-card-header" style="margin: 0; padding: 0; display: flex; justify-content: space-between; align-items: center;">
+              <span class="catalog-card-badge">${category}</span>
+              <span class="catalog-card-price">${formatMoney(price)}</span>
+            </div>
+            <h3 class="catalog-card-title" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">${name}</h3>
+            <p class="catalog-card-desc" style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 38px; flex-grow: 1;">${description}</p>
+            <div class="catalog-card-footer" style="margin-top: 8px; padding: 0; display: flex; gap: 8px; justify-content: flex-end;">
+              <button class="btn btn-secondary btn-sm edit-product-btn" data-id="${id}" style="padding: 4px 10px; font-size: 0.75rem;">Editar</button>
+              <button class="btn btn-danger btn-sm delete-product-btn" data-id="${id}" style="padding: 4px 10px; font-size: 0.75rem;">Borrar</button>
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     this.bindActionButtons();
   }
