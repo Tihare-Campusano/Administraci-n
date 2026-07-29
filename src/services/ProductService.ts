@@ -1,10 +1,8 @@
 import { ProductRepository } from '../repositories/ProductRepository';
-import { SupabaseService } from './SupabaseService';
 import { Product } from '../models/Product';
 
 export class ProductService {
   private repo = new ProductRepository();
-  private supabaseService = new SupabaseService();
 
   async getAllProducts(): Promise<Product[]> {
     return this.repo.getAll();
@@ -30,9 +28,7 @@ export class ProductService {
       updatedAt: now
     };
 
-    const saved = await this.repo.save(product);
-    await this.supabaseService.syncNowIfConfigured();
-    return saved;
+    return await this.repo.save(product);
   }
 
   async toggleAvailability(id: string): Promise<Product> {
@@ -41,14 +37,11 @@ export class ProductService {
 
     product.available = !product.available;
     product.updatedAt = new Date().toISOString();
-    const saved = await this.repo.save(product);
-    await this.supabaseService.syncNowIfConfigured();
-    return saved;
+    return await this.repo.save(product);
   }
 
   async deleteProduct(id: string): Promise<void> {
     await this.repo.delete(id);
-    await this.supabaseService.syncNowIfConfigured();
   }
 
   calculateProfitMargin(product: Product): number {

@@ -21,24 +21,8 @@ export class BackupPage {
     // Seguridad con PIN
     document.getElementById('btn-security-toggle')?.addEventListener('click', () => this.handleSecurityToggle());
     document.getElementById('btn-security-change')?.addEventListener('click', () => this.handleSecurityChange());
-    
-    // Sincronización Local
-    this.setupSyncUI();
 
-    // Sincronización Supabase Cloud
-    this.setupSupabaseUI();
-    
     this.updateSecurityStatusUI();
-  }
-
-  private async setupSyncUI(): Promise<void> {
-    // Sincronización local WiFi simplificada o deshabilitada a favor de Supabase Cloud
-    const syncNowBtn = document.getElementById('btn-sync-now') as HTMLButtonElement;
-    if (!syncNowBtn) return;
-  }
-
-  private async setupSupabaseUI(): Promise<void> {
-    // La conexión a Supabase Cloud ahora es nativa y por defecto
   }
 
   async updateSecurityStatusUI(): Promise<void> {

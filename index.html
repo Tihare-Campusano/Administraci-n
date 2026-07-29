@@ -481,125 +481,15 @@
           </div>
 
           <!-- Section 6 -->
-          <div id="doc-supabase">
-            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; color: #10b981;">☁️ Sincronización Supabase Cloud</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">FoodAdmin soporta la sincronización en la nube mediante Supabase de forma totalmente privada e híbrida (Offline-First). Si configuras Supabase, los datos se sincronizan con internet, pero seguirás pudiendo trabajar sin conexión a máxima velocidad.</p>
+          <div id="doc-storage">
+            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-glass); padding-bottom: 8px; color: #10b981;">💾 Almacenamiento Local e IndexedDB (100% Offline)</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">FoodAdmin opera de manera 100% local en tu computador. Toda la información de productos, pedidos, clientes, notas y finanzas vive dentro de la base de datos de tu navegador/escritorio (IndexedDB), garantizando máxima privacidad, privacidad absoluta y velocidad sin necesidad de conexión a internet.</p>
             
-            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Paso 1: Crear un proyecto en Supabase</h3>
+            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Respaldos y Copias de Seguridad</h3>
             <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px;">
-              <li>Regístrate gratis en <a href="https://supabase.com" target="_blank" style="color: #10b981; font-weight: 600;">supabase.com</a> y crea un nuevo proyecto.</li>
-              <li>Anota la <strong>Project URL</strong> y la <strong>API Key (anon_key)</strong> desde los Ajustes de API de tu proyecto.</li>
-            </ul>
-
-            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Paso 2: Crear las tablas de la base de datos</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 10px;">Ve a la consola SQL de tu proyecto en Supabase (SQL Editor > New query) y ejecuta el siguiente script para crear las tablas compatibles:</p>
-            
-            <pre style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; border: 1px solid var(--border-glass); font-family: monospace; font-size: 0.8rem; color: var(--text-primary); max-height: 280px; overflow-y: auto; line-height: 1.4;">
--- Script de Base de Datos para Supabase (FoodAdmin)
-
--- Tabla de productos
-create table if not exists products (
-  id text primary key,
-  name text not null,
-  description text,
-  price numeric not null default 0,
-  cost numeric not null default 0,
-  category text,
-  available boolean not null default true,
-  image text,
-  created_at text,
-  updated_at text,
-  deleted boolean default false
-);
-
--- Tabla de clientes
-create table if not exists customers (
-  id text primary key,
-  name text not null,
-  phone text,
-  address text,
-  notes text,
-  created_at text,
-  updated_at text,
-  deleted boolean default false
-);
-
--- Tabla de pedidos con clave foránea a clientes
-create table if not exists orders (
-  id text primary key,
-  order_number integer,
-  customer_id text references customers(id) on delete set null,
-  products jsonb not null default '[]'::jsonb,
-  subtotal numeric not null default 0,
-  discount numeric not null default 0,
-  delivery_fee numeric not null default 0,
-  total numeric not null default 0,
-  payment_method text,
-  payment_status text default 'unpaid',
-  status text default 'pending',
-  notes text,
-  created_at text,
-  completed_at text,
-  updated_at text,
-  deleted boolean default false
-);
-
--- Tabla intermedia de detalle de pedido (Relación 1 N entre pedidos y productos)
-create table if not exists order_items (
-  id text primary key,
-  order_id text references orders(id) on delete cascade,
-  product_id text references products(id) on delete set null,
-  name text not null,
-  price numeric not null default 0,
-  quantity integer not null default 1,
-  created_at timestamptz default now()
-);
-
--- Tabla de egresos (gastos)
-create table if not exists expenses (
-  id text primary key,
-  title text not null,
-  amount numeric not null default 0,
-  category text,
-  date text,
-  created_at text,
-  updated_at text,
-  deleted boolean default false
-);
-
--- Tabla de bloc de notas y tareas (Estilo Notion)
-create table if not exists notes (
-  id text primary key,
-  title text not null,
-  content text,
-  items jsonb not null default '[]'::jsonb,
-  category text default 'General',
-  is_pinned boolean default false,
-  color text default '#ec4899',
-  created_at text,
-  updated_at text,
-  deleted boolean default false
-);
-
--- Índices de rendimiento
-create index if not exists idx_orders_customer_id on orders(customer_id);
-create index if not exists idx_orders_status on orders(status);
-create index if not exists idx_notes_is_pinned on notes(is_pinned);
-
--- Permisos RLS para clave anónima (anon_key)
-alter table products disable row level security;
-alter table customers disable row level security;
-alter table orders disable row level security;
-alter table order_items disable row level security;
-alter table expenses disable row level security;
-alter table notes disable row level security;
-            </pre>
-
-            <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-top: 15px; margin-bottom: 8px;">Paso 3: Conectar la aplicación</h3>
-            <ul style="color: var(--text-secondary); margin-left: 1.5rem; display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px;">
-              <li>Ve a <strong>Respaldo y Ajustes</strong> > <strong>Nube (Supabase Cloud Sync)</strong>.</li>
-              <li>Ingresa la URL y anon_key y haz clic en <strong>Probar y Conectar</strong>.</li>
-              <li>¡Listo! Tu aplicación subirá automáticamente todos tus datos e imágenes y se sincronizará sola.</li>
+              <li>Ve a <strong>Respaldo y Ajustes</strong> para generar copias de seguridad en formato JSON.</li>
+              <li>Puedes descargar un archivo de respaldo cuando lo desees para guardarlo en un disco externo o pendrive.</li>
+              <li>Si necesitas migrar tu información a otro equipo, solo debes usar la función <strong>Importar Copia de Seguridad</strong>.</li>
             </ul>
           </div>
 

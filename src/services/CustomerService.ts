@@ -1,10 +1,8 @@
 import { CustomerRepository } from '../repositories/CustomerRepository';
-import { SupabaseService } from './SupabaseService';
 import { Customer } from '../models/Customer';
 
 export class CustomerService {
   private repo = new CustomerRepository();
-  private supabaseService = new SupabaseService();
 
   async getAllCustomers(): Promise<Customer[]> {
     return this.repo.getAll();
@@ -29,13 +27,10 @@ export class CustomerService {
       updatedAt: new Date().toISOString()
     };
 
-    const saved = await this.repo.save(customer);
-    await this.supabaseService.syncNowIfConfigured();
-    return saved;
+    return await this.repo.save(customer);
   }
 
   async deleteCustomer(id: string): Promise<void> {
     await this.repo.delete(id);
-    await this.supabaseService.syncNowIfConfigured();
   }
 }

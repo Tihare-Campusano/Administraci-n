@@ -8,14 +8,14 @@ import { BackupPage } from './pages/BackupPage';
 import { OrderModal } from './components/OrderModal';
 import { ProductRepository } from './repositories/ProductRepository';
 import { CustomerRepository } from './repositories/CustomerRepository';
+import { NoteRepository } from './repositories/NoteRepository';
+import { OrderRepository } from './repositories/OrderRepository';
 import { Customer } from './models/Customer';
 import { showToast } from './components/Toast';
 import { PinLogin } from './components/PinLogin';
 import { SecurityService } from './services/SecurityService';
-import { SyncService } from './services/SyncService';
 
 // Global Instances
-const syncService = new SyncService();
 const dashboardPage = new DashboardPage();
 const activeOrdersPage = new ActiveOrdersPage();
 const historyPage = new HistoryPage();
@@ -26,6 +26,11 @@ const backupPage = new BackupPage();
 const orderModal = new OrderModal();
 const pinLogin = new PinLogin();
 const securityService = new SecurityService();
+
+const orderRepository = new OrderRepository();
+const productRepository = new ProductRepository();
+const customerRepository = new CustomerRepository();
+const noteRepository = new NoteRepository();
 
 let currentTab = 'dashboard';
 
@@ -83,9 +88,8 @@ function loadTabData(tabId: string) {
 }
 
 async function updateBadge() {
-  const orderRepo = new (await import('./repositories/OrderRepository')).OrderRepository();
   try {
-    const orders = await orderRepo.getAll();
+    const orders = await orderRepository.getAll();
     const activeCount = orders.filter(o => o.status === 'pending').length;
     const badge = document.getElementById('active-orders-badge');
     if (badge) {
@@ -98,13 +102,9 @@ async function updateBadge() {
 }
 
 async function seedDatabaseIfEmpty() {
-  const prodRepo = new ProductRepository();
-  const custRepo = new CustomerRepository();
-  const noteRepo = new (await import('./repositories/NoteRepository')).NoteRepository();
-
-  const products = await prodRepo.getAll();
-  const customers = await custRepo.getAll();
-  const notes = await noteRepo.getAll();
+  const products = await productRepository.getAll();
+  const customers = await customerRepository.getAll();
+  const notes = await noteRepository.getAll();
 
   if (products.length === 0) {
     const dummyProducts = [
@@ -113,7 +113,7 @@ async function seedDatabaseIfEmpty() {
       { id: 'prod_seed_3', name: 'Cupcake de Red Velvet', price: 1800, cost: 600, category: 'Cupcakes', available: true, description: 'Cupcake clásico aterciopelado con crema batida de vainilla.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
       { id: 'prod_seed_4', name: 'Caja de 6 Mini Donitas', price: 3500, cost: 1200, category: 'Donas', available: true, description: 'Seis mini donas horneadas con cobertura glaseada de colores.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
     ];
-    for (const p of dummyProducts) await prodRepo.save(p);
+    for (const p of dummyProducts) await productRepository.save(p);
   }
 
   if (customers.length === 0) {
@@ -121,7 +121,7 @@ async function seedDatabaseIfEmpty() {
       { id: 'cli_seed_1', name: 'Claudio Martínez', phone: '+569 8765 4321', address: 'Los Aromos 442', notes: 'Portón de madera.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), deleted: false },
       { id: 'cli_seed_2', name: 'Tihare Campusano', phone: '+569 9876 5432', address: 'Av. Providencia 1202', notes: 'Dejar en conserjería.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), deleted: false }
     ];
-    for (const c of dummyCustomers) await custRepo.save(c);
+    for (const c of dummyCustomers) await customerRepository.save(c);
   }
 
   if (notes.length === 0) {
@@ -155,7 +155,7 @@ async function seedDatabaseIfEmpty() {
         deleted: false
       }
     ];
-    for (const n of dummyNotes) await noteRepo.save(n);
+    for (const n of dummyNotes) await noteRepository.save(n);
   }
 }
 
@@ -194,18 +194,6 @@ async function init() {
     if (isSecurityActive) {
       pinLogin.show('lock');
     }
-    
-    // Iniciar sincronización automática si está habilitada
-    const isSyncActive = await syncService.isSyncEnabled();
-    if (isSyncActive) {
-      syncService.startAutoSync();
-      syncService.syncNow().catch(err => console.warn('Error al sincronizar al iniciar:', err));
-    }
-
-    // Escuchar evento de sincronización para actualizar la interfaz
-    window.addEventListener('db-synced', () => {
-      loadTabData(currentTab);
-    });
 
     // Asegurar que al hacer clic en cualquier input/textarea/select se otorgue foco directo inmediato
     document.addEventListener('click', (e) => {

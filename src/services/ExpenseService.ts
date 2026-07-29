@@ -1,14 +1,12 @@
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
 import { OrderRepository } from '../repositories/OrderRepository';
 import { ProductRepository } from '../repositories/ProductRepository';
-import { SupabaseService } from './SupabaseService';
 import { Expense } from '../models/Expense';
 
 export class ExpenseService {
   private expenseRepo = new ExpenseRepository();
   private orderRepo = new OrderRepository();
   private productRepo = new ProductRepository();
-  private supabaseService = new SupabaseService();
 
   async getAllExpenses(): Promise<Expense[]> {
     return this.expenseRepo.getAll();
@@ -16,14 +14,11 @@ export class ExpenseService {
 
   async saveExpense(expense: Expense): Promise<Expense> {
     if (expense.amount < 0) throw new Error('El monto del gasto debe ser positivo');
-    const saved = await this.expenseRepo.save(expense);
-    await this.supabaseService.syncNowIfConfigured();
-    return saved;
+    return await this.expenseRepo.save(expense);
   }
 
   async deleteExpense(id: string): Promise<void> {
     await this.expenseRepo.delete(id);
-    await this.supabaseService.syncNowIfConfigured();
   }
 
   async getFinancialStats() {
