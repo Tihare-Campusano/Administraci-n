@@ -1,10 +1,27 @@
 import { openDB } from '../database/db';
 import { Order } from '../models/Order';
+import { SupabaseService } from '../services/SupabaseService';
 
 export class OrderRepository {
   private storeName = 'orders';
+  private supabaseService = new SupabaseService();
 
   async getAll(): Promise<Order[]> {
+    try {
+      const remote = await this.supabaseService.getOrders();
+      if (remote.length > 0) {
+        for (const item of remote) {
+          await this.saveLocal(item);
+        }
+        return remote.filter(o => !o.deleted);
+      }
+    } catch (e) {
+      console.warn('OrderRepository remote getAll fallback:', e);
+    }
+    return this.getLocalAll();
+  }
+
+  private async getLocalAll(): Promise<Order[]> {
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(this.storeName, 'readonly');
@@ -19,28 +36,10 @@ export class OrderRepository {
     });
   }
 
-  async getAllRaw(): Promise<Order[]> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, 'readonly');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.getAll();
-
-      request.onsuccess = () => resolve(request.result || []);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
   async getById(id: string): Promise<Order | undefined> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, 'readonly');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.get(id);
-
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
+    if (!id) return undefined;
+    const all = await this.getAll();
+    return all.find(o => o.id === id);
   }
 
   async save(order: Order): Promise<Order> {
@@ -48,13 +47,21 @@ export class OrderRepository {
     if (order.deleted === undefined) {
       order.deleted = false;
     }
+
+    await this.saveLocal(order);
+    await this.supabaseService.saveOrder(order);
+
+    return order;
+  }
+
+  private async saveLocal(order: Order): Promise<void> {
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(this.storeName, 'readwrite');
       const store = transaction.objectStore(this.storeName);
       const request = store.put(order);
 
-      request.onsuccess = () => resolve(order);
+      request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
   }
