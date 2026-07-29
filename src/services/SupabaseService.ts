@@ -3,12 +3,14 @@ import { ProductRepository } from '../repositories/ProductRepository';
 import { CustomerRepository } from '../repositories/CustomerRepository';
 import { OrderRepository } from '../repositories/OrderRepository';
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
+import { NoteRepository } from '../repositories/NoteRepository';
 
 export class SupabaseService {
   private prodRepo = new ProductRepository();
   private custRepo = new CustomerRepository();
   private orderRepo = new OrderRepository();
   private expRepo = new ExpenseRepository();
+  private noteRepo = new NoteRepository();
 
   private client: SupabaseClient | null = null;
 
@@ -49,10 +51,8 @@ export class SupabaseService {
   async testConnection(): Promise<boolean> {
     if (!this.client) return false;
     try {
-      // Query the products table metadata or select a limit of 1
       const { error } = await this.client.from('products').select('id').limit(1);
       if (error) {
-        // If error is code PGRST116 or missing relation, connection is valid, tables just don't exist yet
         if (error.code === 'PGRST116' || error.message.includes('relation "products" does not exist')) {
           return true;
         }
@@ -77,15 +77,14 @@ export class SupabaseService {
     await this.syncTable('customers', this.custRepo);
     await this.syncTable('orders', this.orderRepo);
     await this.syncTable('expenses', this.expRepo);
+    await this.syncTable('notes', this.noteRepo);
   }
 
   private async syncTable(tableName: string, repo: any): Promise<void> {
     if (!this.client) return;
 
-    // A. Gather local items (including soft-deleted)
     const localItems = await repo.getAllRaw();
 
-    // B. Download remote items
     const { data: remoteItems, error } = await this.client.from(tableName).select('*');
     if (error) {
       throw new Error(`Error al leer tabla remota ${tableName}: ${error.message}`);
@@ -98,7 +97,6 @@ export class SupabaseService {
       }
     }
 
-    // C. Detect items to upload (local newer than remote)
     const toUpload: any[] = [];
     for (const localItem of localItems) {
       const remoteItem = remoteMap.get(localItem.id);
@@ -119,9 +117,30 @@ export class SupabaseService {
       if (uploadError) {
         throw new Error(`Error al subir datos a ${tableName}: ${uploadError.message}`);
       }
+
+      // Si estamos subiendo pedidos, alimentar también la tabla relacional de detalle order_items
+      if (tableName === 'orders') {
+        const orderItemsToUpload: any[] = [];
+        for (const order of toUpload) {
+          if (Array.isArray(order.products)) {
+            for (const p of order.products) {
+              orderItemsToUpload.push({
+                id: `${order.id}_${p.productId || Math.random().toString(36).substring(2, 7)}`,
+                order_id: order.id,
+                product_id: p.productId || null,
+                name: p.name,
+                price: p.price,
+                quantity: p.quantity
+              });
+            }
+          }
+        }
+        if (orderItemsToUpload.length > 0) {
+          await this.client.from('order_items').upsert(orderItemsToUpload);
+        }
+      }
     }
 
-    // D. Detect items to download (remote newer than local)
     if (remoteItems) {
       for (const remoteItem of remoteItems) {
         const mappedRemote = this.mapFromDb(remoteItem);
@@ -139,20 +158,49 @@ export class SupabaseService {
     }
   }
 
-  // Helpers to map camelCase <-> snake_case properties
   private mapToDb(item: any): any {
+    const keyMap: Record<string, string> = {
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+      completedAt: 'completed_at',
+      customerId: 'customer_id',
+      paymentMethod: 'payment_method',
+      paymentStatus: 'payment_status',
+      orderNumber: 'order_number',
+      deliveryFee: 'delivery_fee',
+      isPinned: 'is_pinned',
+      image: 'image_url',
+      date: 'expense_date',
+      items: 'checklist'
+    };
+
     const dbItem: any = {};
     for (const key of Object.keys(item)) {
-      const dbKey = key === 'createdAt' ? 'created_at' : (key === 'updatedAt' ? 'updated_at' : (key === 'customerId' ? 'customer_id' : (key === 'paymentMethod' ? 'payment_method' : (key === 'paymentStatus' ? 'payment_status' : key))));
+      const dbKey = keyMap[key] || key;
       dbItem[dbKey] = item[key];
     }
     return dbItem;
   }
 
   private mapFromDb(dbItem: any): any {
+    const keyMap: Record<string, string> = {
+      created_at: 'createdAt',
+      updated_at: 'updatedAt',
+      completed_at: 'completedAt',
+      customer_id: 'customerId',
+      payment_method: 'paymentMethod',
+      payment_status: 'paymentStatus',
+      order_number: 'orderNumber',
+      delivery_fee: 'deliveryFee',
+      is_pinned: 'isPinned',
+      image_url: 'image',
+      expense_date: 'date',
+      checklist: 'items'
+    };
+
     const item: any = {};
     for (const key of Object.keys(dbItem)) {
-      const jsKey = key === 'created_at' ? 'createdAt' : (key === 'updated_at' ? 'updatedAt' : (key === 'customer_id' ? 'customerId' : (key === 'payment_method' ? 'paymentMethod' : (key === 'payment_status' ? 'paymentStatus' : key))));
+      const jsKey = keyMap[key] || key;
       item[jsKey] = dbItem[key];
     }
     return item;

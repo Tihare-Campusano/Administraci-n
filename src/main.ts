@@ -3,6 +3,7 @@ import { ActiveOrdersPage } from './pages/ActiveOrdersPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { CatalogPage } from './pages/CatalogPage';
 import { ClientsPage } from './pages/ClientsPage';
+import { NotesPage } from './pages/NotesPage';
 import { BackupPage } from './pages/BackupPage';
 import { OrderModal } from './components/OrderModal';
 import { ProductRepository } from './repositories/ProductRepository';
@@ -20,6 +21,7 @@ const activeOrdersPage = new ActiveOrdersPage();
 const historyPage = new HistoryPage();
 const catalogPage = new CatalogPage();
 const clientsPage = new ClientsPage();
+const notesPage = new NotesPage();
 const backupPage = new BackupPage();
 const orderModal = new OrderModal();
 const pinLogin = new PinLogin();
@@ -72,6 +74,9 @@ function loadTabData(tabId: string) {
     case 'clients':
       clientsPage.load();
       break;
+    case 'notes':
+      notesPage.load();
+      break;
     case 'documentation':
       break;
   }
@@ -95,9 +100,11 @@ async function updateBadge() {
 async function seedDatabaseIfEmpty() {
   const prodRepo = new ProductRepository();
   const custRepo = new CustomerRepository();
+  const noteRepo = new (await import('./repositories/NoteRepository')).NoteRepository();
 
   const products = await prodRepo.getAll();
   const customers = await custRepo.getAll();
+  const notes = await noteRepo.getAll();
 
   if (products.length === 0) {
     const dummyProducts = [
@@ -116,6 +123,40 @@ async function seedDatabaseIfEmpty() {
     ];
     for (const c of dummyCustomers) await custRepo.save(c);
   }
+
+  if (notes.length === 0) {
+    const dummyNotes = [
+      {
+        id: 'note_seed_1',
+        title: 'Lista de Insumos Semanales',
+        category: 'Compras',
+        color: '#ec4899',
+        content: 'Recordar pedir la harina antes del jueves.',
+        isPinned: true,
+        items: [
+          { id: 'item_1', text: '20kg Harina de repostería', completed: true },
+          { id: 'item_2', text: '5kg Manjar pastelero', completed: false },
+          { id: 'item_3', text: '2kg Chocolate belga 70%', completed: false }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        deleted: false
+      },
+      {
+        id: 'note_seed_2',
+        title: 'Receta Frosting Queso Crema',
+        category: 'Recetas',
+        color: '#3b82f6',
+        content: '250g queso crema helado\n120g mantequilla sin sal\n400g azúcar flor tamizada\n1 cda extracto de vainilla pura.',
+        isPinned: false,
+        items: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        deleted: false
+      }
+    ];
+    for (const n of dummyNotes) await noteRepo.save(n);
+  }
 }
 
 async function init() {
@@ -128,6 +169,7 @@ async function init() {
     historyPage.init(() => loadTabData(currentTab));
     catalogPage.init();
     clientsPage.init();
+    notesPage.init();
     
     // Link quick add client inside order modal
     document.getElementById('link-quick-add-client')?.addEventListener('click', () => {

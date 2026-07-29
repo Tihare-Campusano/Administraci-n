@@ -31,7 +31,7 @@ export class OrderService {
     const total = subtotal - data.discount + data.deliveryFee;
 
     const newOrder: Order = {
-      id: `ord_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: crypto.randomUUID(),
       orderNumber,
       customerId: data.customerId,
       products: data.items,

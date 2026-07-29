@@ -1,5 +1,5 @@
 const DB_NAME = 'FoodAdminDB';
-const DB_VERSION = 3; // Incremented version to add settings store
+const DB_VERSION = 4; // Incremented version to add notes store
 
 export function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -35,6 +35,10 @@ export function openDB(): Promise<IDBDatabase> {
 
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings', { keyPath: 'key' });
+      }
+
+      if (!db.objectStoreNames.contains('notes')) {
+        db.createObjectStore('notes', { keyPath: 'id' });
       }
     };
   });

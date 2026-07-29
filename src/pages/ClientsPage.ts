@@ -12,6 +12,11 @@ export class ClientsPage {
     document.getElementById('close-client-modal')?.addEventListener('click', () => this.closeModal());
     document.getElementById('btn-cancel-client')?.addEventListener('click', () => this.closeModal());
     document.getElementById('client-form')?.addEventListener('submit', (e) => this.handleFormSubmit(e));
+
+    const modalOverlay = document.getElementById('modal-client');
+    modalOverlay?.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) this.closeModal();
+    });
   }
 
   async load(): Promise<void> {
@@ -71,7 +76,7 @@ export class ClientsPage {
     });
   }
 
-  async openModal(id?: string): Promise<void> {
+  async openModal(id?: string, _isQuickAdd?: boolean): Promise<void> {
     this.selectedClientId = id || null;
     const form = document.getElementById('client-form') as HTMLFormElement;
     const title = document.getElementById('client-modal-title');
@@ -94,6 +99,9 @@ export class ClientsPage {
     }
 
     document.getElementById('modal-client')?.classList.add('active');
+    setTimeout(() => {
+      (document.getElementById('client-name') as HTMLInputElement)?.focus();
+    }, 50);
   }
 
   closeModal(): void {

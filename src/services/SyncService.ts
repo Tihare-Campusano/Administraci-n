@@ -96,12 +96,14 @@ export class SyncService {
     const customers = await this.custRepo.getAllRaw();
     const orders = await this.orderRepo.getAllRaw();
     const expenses = await this.expRepo.getAllRaw();
+    const notes = await (new (await import('../repositories/NoteRepository')).NoteRepository()).getAllRaw();
 
     const localPayload = {
       products,
       customers,
       orders,
-      expenses
+      expenses,
+      notes
     };
 
     // 2. Send payload to Python sync server
@@ -152,6 +154,16 @@ export class SyncService {
         const local = await this.expRepo.getById(item.id);
         if (!local || !local.updatedAt || item.updatedAt > local.updatedAt) {
           await this.expRepo.save(item);
+        }
+      }
+    }
+
+    if (remoteData.notes) {
+      const noteRepo = new (await import('../repositories/NoteRepository')).NoteRepository();
+      for (const item of remoteData.notes) {
+        const local = await noteRepo.getById(item.id);
+        if (!local || !local.updatedAt || item.updatedAt > local.updatedAt) {
+          await noteRepo.save(item);
         }
       }
     }

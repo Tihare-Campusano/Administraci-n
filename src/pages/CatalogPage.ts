@@ -12,6 +12,11 @@ export class CatalogPage {
     document.getElementById('btn-cancel-product')?.addEventListener('click', () => this.closeModal());
     document.getElementById('product-form')?.addEventListener('submit', (e) => this.handleFormSubmit(e));
 
+    const modalOverlay = document.getElementById('modal-product');
+    modalOverlay?.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) this.closeModal();
+    });
+
     // Evento de previsualización de foto
     const fileInput = document.getElementById('product-image-file') as HTMLInputElement;
     const previewImg = document.getElementById('product-image-preview') as HTMLImageElement;
@@ -140,6 +145,9 @@ export class CatalogPage {
     }
 
     document.getElementById('modal-product')?.classList.add('active');
+    setTimeout(() => {
+      (document.getElementById('product-name') as HTMLInputElement)?.focus();
+    }, 50);
   }
 
   closeModal(): void {
