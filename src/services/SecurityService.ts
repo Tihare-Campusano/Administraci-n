@@ -12,6 +12,11 @@ export class SecurityService {
     return enabled === true;
   }
 
+  async hasPinSet(): Promise<boolean> {
+    const hash = await this.repository.getVal<string>(this.PIN_HASH_KEY);
+    return !!hash;
+  }
+
   // Genera un hash SHA-256 robusto. Si no está disponible crypto.subtle (contextos HTTP no seguros en red local),
   // se implementa un fallback hash algorítmico simple (fnv1a) para evitar excepciones fatales.
   async hashPin(pin: string): Promise<string> {

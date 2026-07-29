@@ -151,10 +151,15 @@ async function init() {
       pinLogin.show('lock');
     });
 
-    // Validar seguridad al iniciar
+    // Validar seguridad al iniciar: Si existe un PIN o la seguridad está activa, solicitar PIN de 4 dígitos.
+    // De lo contrario, invitar al usuario a crear su PIN por primera vez.
     const isSecurityActive = await securityService.isSecurityEnabled();
-    if (isSecurityActive) {
+    const hasPin = await securityService.hasPinSet();
+
+    if (isSecurityActive || hasPin) {
       pinLogin.show('lock');
+    } else {
+      pinLogin.show('setup');
     }
 
     setupTabNavigation();
