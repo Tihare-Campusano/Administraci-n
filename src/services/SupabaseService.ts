@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Logger } from '../utils/Logger';
 
 export const SUPABASE_URL = 'https://atmnawbmvvfjdkkwkdwm.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0bW5hd2JtdnZfamRra3drZHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxOTQ5MjIsImV4cCI6MjEwMDc3MDkyMn0.UX58TjLoemo6_OlosbUCW3Odm5Y1EW7xrch3kqgE-d8';
@@ -9,20 +10,25 @@ export class SupabaseService {
   public getClient(): SupabaseClient {
     if (!SupabaseService.instance) {
       SupabaseService.instance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      Logger.info('system', 'INITIALIZE_SUPABASE_CLIENT', { url: SUPABASE_URL });
     }
     return SupabaseService.instance;
   }
 
   // --- CUSTOMERS ---
   async getCustomers(): Promise<any[]> {
+    const startTime = performance.now();
     try {
       const client = this.getClient();
       const { data, error } = await client.from('customers').select('*');
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al leer clientes en Supabase:', error.message);
+        Logger.error('customers', 'SELECT', null, error, durationMs);
         throw error;
       }
-      return (data || []).map(item => ({
+
+      const mapped = (data || []).map(item => ({
         id: item.id,
         name: item.name,
         phone: item.phone || '',
@@ -32,45 +38,60 @@ export class SupabaseService {
         updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
         deleted: item.deleted || false
       }));
-    } catch (e) {
-      console.warn('Supabase fetch customers failed:', e);
+
+      Logger.info('customers', 'SELECT', { count: mapped.length }, mapped, durationMs);
+      return mapped;
+    } catch (e: any) {
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.warn('customers', 'SELECT_FALLBACK', null, e, durationMs);
       return [];
     }
   }
 
   async saveCustomer(customer: any): Promise<void> {
+    const startTime = performance.now();
+    const payload = {
+      id: customer.id,
+      name: customer.name,
+      phone: customer.phone || '',
+      address: customer.address || '',
+      notes: customer.notes || '',
+      created_at: customer.createdAt,
+      updated_at: customer.updatedAt,
+      deleted: customer.deleted || false
+    };
+
     try {
       const client = this.getClient();
-      const payload = {
-        id: customer.id,
-        name: customer.name,
-        phone: customer.phone,
-        address: customer.address || '',
-        notes: customer.notes || '',
-        created_at: customer.createdAt,
-        updated_at: customer.updatedAt,
-        deleted: customer.deleted || false
-      };
-      const { error } = await client.from('customers').upsert(payload);
+      const { data, error } = await client.from('customers').upsert(payload).select();
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al guardar cliente en Supabase:', error.message);
+        Logger.error('customers', 'UPSERT', payload, error, durationMs);
         throw error;
       }
+
+      Logger.info('customers', 'UPSERT', payload, data, durationMs);
     } catch (e: any) {
-      console.warn('Supabase saveCustomer failed:', e.message || e);
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.error('customers', 'UPSERT_EXCEPTION', payload, e, durationMs);
     }
   }
 
   // --- PRODUCTS ---
   async getProducts(): Promise<any[]> {
+    const startTime = performance.now();
     try {
       const client = this.getClient();
       const { data, error } = await client.from('products').select('*');
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al leer productos en Supabase:', error.message);
+        Logger.error('products', 'SELECT', null, error, durationMs);
         throw error;
       }
-      return (data || []).map(item => ({
+
+      const mapped = (data || []).map(item => ({
         id: item.id,
         name: item.name,
         description: item.description || '',
@@ -83,48 +104,63 @@ export class SupabaseService {
         updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
         deleted: item.deleted || false
       }));
-    } catch (e) {
-      console.warn('Supabase fetch products failed:', e);
+
+      Logger.info('products', 'SELECT', { count: mapped.length }, mapped, durationMs);
+      return mapped;
+    } catch (e: any) {
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.warn('products', 'SELECT_FALLBACK', null, e, durationMs);
       return [];
     }
   }
 
   async saveProduct(product: any): Promise<void> {
+    const startTime = performance.now();
+    const payload = {
+      id: product.id,
+      name: product.name,
+      description: product.description || '',
+      price: Number(product.price) || 0,
+      cost: Number(product.cost) || 0,
+      category: product.category || 'General',
+      available: product.available !== false,
+      image: product.image || '',
+      created_at: product.createdAt,
+      updated_at: product.updatedAt,
+      deleted: product.deleted || false
+    };
+
     try {
       const client = this.getClient();
-      const payload = {
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        cost: product.cost,
-        category: product.category,
-        available: product.available,
-        image: product.image || '',
-        created_at: product.createdAt,
-        updated_at: product.updatedAt,
-        deleted: product.deleted || false
-      };
-      const { error } = await client.from('products').upsert(payload);
+      const { data, error } = await client.from('products').upsert(payload).select();
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al guardar producto en Supabase:', error.message);
+        Logger.error('products', 'UPSERT', payload, error, durationMs);
         throw error;
       }
+
+      Logger.info('products', 'UPSERT', payload, data, durationMs);
     } catch (e: any) {
-      console.warn('Supabase saveProduct failed:', e.message || e);
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.error('products', 'UPSERT_EXCEPTION', payload, e, durationMs);
     }
   }
 
   // --- ORDERS ---
   async getOrders(): Promise<any[]> {
+    const startTime = performance.now();
     try {
       const client = this.getClient();
       const { data, error } = await client.from('orders').select('*');
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al leer pedidos en Supabase:', error.message);
+        Logger.error('orders', 'SELECT', null, error, durationMs);
         throw error;
       }
-      return (data || []).map(item => ({
+
+      const mapped = (data || []).map(item => ({
         id: item.id,
         orderNumber: item.order_number || item.orderNumber || 1,
         customerId: item.customer_id || item.customerId,
@@ -142,53 +178,68 @@ export class SupabaseService {
         updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
         deleted: item.deleted || false
       }));
-    } catch (e) {
-      console.warn('Supabase fetch orders failed:', e);
+
+      Logger.info('orders', 'SELECT', { count: mapped.length }, mapped, durationMs);
+      return mapped;
+    } catch (e: any) {
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.warn('orders', 'SELECT_FALLBACK', null, e, durationMs);
       return [];
     }
   }
 
   async saveOrder(order: any): Promise<void> {
+    const startTime = performance.now();
+    const payload = {
+      id: order.id,
+      order_number: order.orderNumber,
+      customer_id: order.customerId,
+      products: order.products,
+      subtotal: order.subtotal,
+      discount: order.discount,
+      delivery_fee: order.deliveryFee,
+      total: order.total,
+      payment_method: order.paymentMethod,
+      payment_status: order.paymentStatus,
+      status: order.status,
+      notes: order.notes || '',
+      created_at: order.createdAt,
+      completed_at: order.completedAt || null,
+      updated_at: order.updatedAt,
+      deleted: order.deleted || false
+    };
+
     try {
       const client = this.getClient();
-      const payload = {
-        id: order.id,
-        order_number: order.orderNumber,
-        customer_id: order.customerId,
-        products: order.products,
-        subtotal: order.subtotal,
-        discount: order.discount,
-        delivery_fee: order.deliveryFee,
-        total: order.total,
-        payment_method: order.paymentMethod,
-        payment_status: order.paymentStatus,
-        status: order.status,
-        notes: order.notes,
-        created_at: order.createdAt,
-        completed_at: order.completedAt || null,
-        updated_at: order.updatedAt,
-        deleted: order.deleted || false
-      };
-      const { error } = await client.from('orders').upsert(payload);
+      const { data, error } = await client.from('orders').upsert(payload).select();
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al guardar pedido en Supabase:', error.message);
+        Logger.error('orders', 'UPSERT', payload, error, durationMs);
         throw error;
       }
+
+      Logger.info('orders', 'UPSERT', payload, data, durationMs);
     } catch (e: any) {
-      console.warn('Supabase saveOrder failed:', e.message || e);
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.error('orders', 'UPSERT_EXCEPTION', payload, e, durationMs);
     }
   }
 
   // --- EXPENSES ---
   async getExpenses(): Promise<any[]> {
+    const startTime = performance.now();
     try {
       const client = this.getClient();
       const { data, error } = await client.from('expenses').select('*');
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al leer gastos en Supabase:', error.message);
+        Logger.error('expenses', 'SELECT', null, error, durationMs);
         throw error;
       }
-      return (data || []).map(item => ({
+
+      const mapped = (data || []).map(item => ({
         id: item.id,
         title: item.title,
         amount: Number(item.amount) || 0,
@@ -198,45 +249,60 @@ export class SupabaseService {
         updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
         deleted: item.deleted || false
       }));
-    } catch (e) {
-      console.warn('Supabase fetch expenses failed:', e);
+
+      Logger.info('expenses', 'SELECT', { count: mapped.length }, mapped, durationMs);
+      return mapped;
+    } catch (e: any) {
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.warn('expenses', 'SELECT_FALLBACK', null, e, durationMs);
       return [];
     }
   }
 
   async saveExpense(expense: any): Promise<void> {
+    const startTime = performance.now();
+    const payload = {
+      id: expense.id,
+      title: expense.title,
+      amount: expense.amount,
+      category: expense.category || 'General',
+      date: expense.date,
+      created_at: expense.createdAt || new Date().toISOString(),
+      updated_at: expense.updatedAt || new Date().toISOString(),
+      deleted: expense.deleted || false
+    };
+
     try {
       const client = this.getClient();
-      const payload = {
-        id: expense.id,
-        title: expense.title,
-        amount: expense.amount,
-        category: expense.category,
-        date: expense.date,
-        created_at: expense.createdAt || new Date().toISOString(),
-        updated_at: expense.updatedAt || new Date().toISOString(),
-        deleted: expense.deleted || false
-      };
-      const { error } = await client.from('expenses').upsert(payload);
+      const { data, error } = await client.from('expenses').upsert(payload).select();
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al guardar gasto en Supabase:', error.message);
+        Logger.error('expenses', 'UPSERT', payload, error, durationMs);
         throw error;
       }
+
+      Logger.info('expenses', 'UPSERT', payload, data, durationMs);
     } catch (e: any) {
-      console.warn('Supabase saveExpense failed:', e.message || e);
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.error('expenses', 'UPSERT_EXCEPTION', payload, e, durationMs);
     }
   }
 
   // --- NOTES ---
   async getNotes(): Promise<any[]> {
+    const startTime = performance.now();
     try {
       const client = this.getClient();
       const { data, error } = await client.from('notes').select('*');
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al leer notas en Supabase:', error.message);
+        Logger.error('notes', 'SELECT', null, error, durationMs);
         throw error;
       }
-      return (data || []).map(item => ({
+
+      const mapped = (data || []).map(item => ({
         id: item.id,
         title: item.title,
         content: item.content || '',
@@ -248,34 +314,45 @@ export class SupabaseService {
         updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
         deleted: item.deleted || false
       }));
-    } catch (e) {
-      console.warn('Supabase fetch notes failed:', e);
+
+      Logger.info('notes', 'SELECT', { count: mapped.length }, mapped, durationMs);
+      return mapped;
+    } catch (e: any) {
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.warn('notes', 'SELECT_FALLBACK', null, e, durationMs);
       return [];
     }
   }
 
   async saveNote(note: any): Promise<void> {
+    const startTime = performance.now();
+    const payload = {
+      id: note.id,
+      title: note.title,
+      content: note.content || '',
+      items: note.items || [],
+      category: note.category || 'General',
+      is_pinned: note.isPinned !== undefined ? note.isPinned : false,
+      color: note.color || '#ec4899',
+      created_at: note.createdAt,
+      updated_at: note.updatedAt,
+      deleted: note.deleted || false
+    };
+
     try {
       const client = this.getClient();
-      const payload = {
-        id: note.id,
-        title: note.title,
-        content: note.content,
-        items: note.items,
-        category: note.category,
-        is_pinned: note.isPinned,
-        color: note.color,
-        created_at: note.createdAt,
-        updated_at: note.updatedAt,
-        deleted: note.deleted || false
-      };
-      const { error } = await client.from('notes').upsert(payload);
+      const { data, error } = await client.from('notes').upsert(payload).select();
+      const durationMs = Math.round(performance.now() - startTime);
+
       if (error) {
-        console.error('Error al guardar nota en Supabase:', error.message);
+        Logger.error('notes', 'UPSERT', payload, error, durationMs);
         throw error;
       }
+
+      Logger.info('notes', 'UPSERT', payload, data, durationMs);
     } catch (e: any) {
-      console.warn('Supabase saveNote failed:', e.message || e);
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.error('notes', 'UPSERT_EXCEPTION', payload, e, durationMs);
     }
   }
 }
