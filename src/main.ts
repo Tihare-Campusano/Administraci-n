@@ -141,6 +141,7 @@ async function init() {
     orderModal.init(() => loadTabData(currentTab));
     authLogin.init(() => {
       backupPage.updateSecurityStatusUI();
+      loadTabData(currentTab);
     });
     
     backupPage.init(() => loadTabData(currentTab), authLogin);

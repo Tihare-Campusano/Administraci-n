@@ -16,14 +16,15 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      webSecurity: false,
+      allowRunningInsecureContent: true
     },
     icon: path.join(__dirname, 'src', 'assets', 'gato_chef.ico'),
-    // Estilo premium: ventana integrada limpia
     title: 'FoodAdmin',
     autoHideMenuBar: true,
   });
 
-  // Ocultar la barra de menú predeterminada de Electron para un look nativo premium
+  // Ocultar la barra de menú predeterminada de Electron
   mainWindow.setMenu(null);
 
   // Cargar el archivo compilado por Vite

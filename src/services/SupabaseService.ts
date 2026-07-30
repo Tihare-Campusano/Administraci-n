@@ -12,7 +12,14 @@ export class SupabaseService {
     if (!SupabaseService.instance) {
       SupabaseService.instance = createClient(
         SUPABASE_URL,
-        SUPABASE_ANON_KEY
+        SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
       );
 
       Logger.info(
