@@ -405,8 +405,12 @@ function fakeNote() {
  *********************************************************************/
 
 async function testSecurity(runner: TestRunner) {
-
   const securityService = new SecurityService();
+  const supabaseService = (securityService as any).supabaseService;
+  const securityRepo = (securityService as any).repository;
+
+  // 1. Preservar contraseña original del usuario si existe
+  const originalHash = await supabaseService.getSetting('security_password_hash');
 
   const pin = "1234";
 
@@ -427,8 +431,7 @@ async function testSecurity(runner: TestRunner) {
     "El hash no es igual al PIN"
   );
 
-  // Guardar contraseña
-
+  // Guardar contraseña de prueba
   await securityService.setPassword(pin);
 
   const valid = await securityService.validatePassword(pin);
@@ -446,7 +449,6 @@ async function testSecurity(runner: TestRunner) {
   );
 
   // Distintos hashes
-
   const hash2 = await securityService.hashPassword("5678");
 
   runner.assert(
@@ -455,7 +457,6 @@ async function testSecurity(runner: TestRunner) {
   );
 
   // Hash consistente
-
   const hash3 = await securityService.hashPassword(pin);
 
   runner.assert(
@@ -463,8 +464,16 @@ async function testSecurity(runner: TestRunner) {
     "Hash determinístico"
   );
 
-  console.log("");
+  // 2. Restaurar contraseña original del usuario tras finalizar el test
+  if (originalHash) {
+    await supabaseService.saveSetting('security_password_hash', originalHash);
+    await securityRepo.setVal('security_password_hash', originalHash);
+  } else {
+    await supabaseService.deleteSetting('security_password_hash');
+    await securityRepo.deleteVal('security_password_hash');
+  }
 
+  console.log("");
 }
 
 /**********************************************************************
