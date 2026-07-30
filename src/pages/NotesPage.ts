@@ -110,7 +110,7 @@ export class NotesPage {
       ` : '';
 
       return `
-        <div class="samsung-note-card ${isPinned ? 'pinned' : ''}" style="border-top-color: ${color};">
+        <div class="samsung-note-card ${isPinned ? 'pinned' : ''}" data-id="${id}" style="--note-color: ${color};">
           <div class="note-header">
             <span class="note-category-badge">${category}</span>
             <button class="note-pin-btn ${isPinned ? 'active' : ''}" data-id="${id}" title="${isPinned ? 'Desmarcar destacada' : 'Destacar nota'}">
@@ -135,6 +135,13 @@ export class NotesPage {
   }
 
   private bindCardEvents(): void {
+    document.querySelectorAll('.samsung-note-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.getAttribute('data-id');
+        if (id) this.openModal(id);
+      });
+    });
+
     document.querySelectorAll('.note-pin-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -146,8 +153,15 @@ export class NotesPage {
       });
     });
 
+    document.querySelectorAll('.checklist-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    });
+
     document.querySelectorAll('.note-task-checkbox').forEach(cb => {
       cb.addEventListener('change', async (e) => {
+        e.stopPropagation();
         const target = e.target as HTMLInputElement;
         const noteId = target.getAttribute('data-note-id');
         const itemId = target.getAttribute('data-item-id');
@@ -159,11 +173,19 @@ export class NotesPage {
     });
 
     document.querySelectorAll('.edit-note-btn').forEach(btn => {
-      btn.addEventListener('click', () => this.openModal(btn.getAttribute('data-id') || undefined));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        if (id) this.openModal(id);
+      });
     });
 
     document.querySelectorAll('.delete-note-btn').forEach(btn => {
-      btn.addEventListener('click', () => this.deleteNote(btn.getAttribute('data-id') || ''));
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        if (id) this.deleteNote(id);
+      });
     });
   }
 
