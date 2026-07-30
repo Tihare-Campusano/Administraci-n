@@ -16,20 +16,17 @@ export class SecurityService {
   }
 
   async hasPasswordSet(): Promise<boolean> {
-    let hash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
-    if (!hash) {
-      try {
-        const remoteHash = await this.supabaseService.getSetting(this.PASSWORD_HASH_KEY);
-        if (remoteHash) {
-          hash = remoteHash;
-          await this.repository.setVal(this.PASSWORD_HASH_KEY, hash);
-          await this.repository.setVal(this.ENABLED_KEY, true);
-        }
-      } catch (e) {
-        // Fallback silencioso en offline
+    try {
+      const remoteHash = await this.supabaseService.getSetting(this.PASSWORD_HASH_KEY);
+      if (remoteHash) {
+        await this.repository.setVal(this.PASSWORD_HASH_KEY, remoteHash);
+        await this.repository.setVal(this.ENABLED_KEY, true);
+        return true;
       }
-    }
-    return !!hash;
+    } catch (e) {}
+
+    const localHash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
+    return !!localHash;
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -57,34 +54,33 @@ export class SecurityService {
       throw new Error('La contraseña no puede estar vacía.');
     }
     const hash = await this.hashPassword(password.trim());
+    
+    // Guardar directamente en Supabase (base de datos primaria)
+    await this.supabaseService.saveSetting(this.PASSWORD_HASH_KEY, hash);
+    
+    // Guardar en cache local
     await this.repository.setVal(this.PASSWORD_HASH_KEY, hash);
     await this.repository.setVal(this.ENABLED_KEY, true);
-    
-    try {
-      await this.supabaseService.saveSetting(this.PASSWORD_HASH_KEY, hash);
-    } catch (e) {
-      console.warn('Fallo al respaldar contraseña en Supabase (se mantiene local):', e);
-    }
 
     SecurityService.isAuthenticated = true;
   }
 
   async validatePassword(password: string): Promise<boolean> {
-    let savedHash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
+    const inputHash = await this.hashPassword(password.trim());
+    let savedHash: string | null = null;
+    
+    try {
+      savedHash = await this.supabaseService.getSetting(this.PASSWORD_HASH_KEY);
+    } catch (e) {}
+
     if (!savedHash) {
-      try {
-        const remoteHash = await this.supabaseService.getSetting(this.PASSWORD_HASH_KEY);
-        if (remoteHash) {
-          savedHash = remoteHash;
-          await this.repository.setVal(this.PASSWORD_HASH_KEY, savedHash);
-        }
-      } catch (e) {}
+      savedHash = (await this.repository.getVal<string>(this.PASSWORD_HASH_KEY)) || null;
     }
 
     if (!savedHash) {
       return false;
     }
-    const inputHash = await this.hashPassword(password.trim());
+
     if (savedHash === inputHash) {
       SecurityService.isAuthenticated = true;
       return true;
@@ -95,11 +91,9 @@ export class SecurityService {
   async disableSecurity(currentPassword: string): Promise<boolean> {
     const isValid = await this.validatePassword(currentPassword);
     if (isValid) {
+      await this.supabaseService.saveSetting(this.PASSWORD_HASH_KEY, null);
       await this.repository.setVal(this.ENABLED_KEY, false);
       await this.repository.deleteVal(this.PASSWORD_HASH_KEY);
-      try {
-        await this.supabaseService.saveSetting(this.PASSWORD_HASH_KEY, null);
-      } catch (e) {}
       SecurityService.isAuthenticated = false;
       return true;
     }

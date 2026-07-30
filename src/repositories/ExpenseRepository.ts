@@ -53,9 +53,7 @@ export class ExpenseRepository {
       expense.deleted = false;
     }
 
-    // Guardar directamente en Supabase (base de datos primaria)
     await this.supabaseService.saveExpense(expense);
-    // Guardar en cache local silenciosamente
     await this.saveLocal(expense).catch(() => {});
 
     return expense;
@@ -74,11 +72,19 @@ export class ExpenseRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const expense = await this.getById(id);
-    if (expense) {
-      expense.deleted = true;
-      expense.updatedAt = new Date().toISOString();
-      await this.save(expense);
-    }
+    await this.supabaseService.deleteRow('expenses', id);
+    await this.deleteLocal(id).catch(() => {});
+  }
+
+  private async deleteLocal(id: string): Promise<void> {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.storeName, 'readwrite');
+      const store = transaction.objectStore(this.storeName);
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
   }
 }

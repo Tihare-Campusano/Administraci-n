@@ -37,8 +37,7 @@ export class SupabaseService {
 
       const { data, error } = await client
         .from(table)
-        .select('*')
-        .eq('deleted', false);
+        .select('*');
 
       const durationMs = Math.round(performance.now() - startTime);
 
@@ -47,15 +46,17 @@ export class SupabaseService {
         throw error;
       }
 
+      const activeData = (data || []).filter(item => item.deleted !== true);
+
       Logger.info(
         table,
         'SELECT',
-        { count: data?.length ?? 0 },
-        data,
+        { count: activeData.length },
+        activeData,
         durationMs
       );
 
-      return data ?? [];
+      return activeData;
     } catch (e: any) {
       Logger.error(table, 'SELECT_EXCEPTION', null, e);
       return [];
@@ -125,6 +126,25 @@ export class SupabaseService {
         e
       );
 
+      throw e;
+    }
+  }
+
+  async deleteRow(table: string, id: string): Promise<void> {
+    const startTime = performance.now();
+    try {
+      const client = this.getClient();
+      const { error } = await client.from(table).delete().eq('id', id);
+      const durationMs = Math.round(performance.now() - startTime);
+
+      if (error) {
+        Logger.error(table, 'DELETE', { id }, error, durationMs);
+        throw error;
+      }
+
+      Logger.info(table, 'DELETE', { id }, null, durationMs);
+    } catch (e: any) {
+      Logger.error(table, 'DELETE_EXCEPTION', { id }, e);
       throw e;
     }
   }

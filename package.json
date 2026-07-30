@@ -8,7 +8,8 @@
     "dev": "vite --host --port 8000",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "desktop": "npm run build && electron ."
+    "desktop": "npm run build && electron .",
+    "pack": "npm run build && npx electron-packager . FoodAdmin --platform=win32 --arch=x64 --overwrite --out=dist-exe --icon=src/assets/gato_chef.ico"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

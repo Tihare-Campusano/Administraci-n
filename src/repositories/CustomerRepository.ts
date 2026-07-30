@@ -49,9 +49,7 @@ export class CustomerRepository {
       customer.deleted = false;
     }
     
-    // Guardar directamente en Supabase (base de datos primaria)
     await this.supabaseService.saveCustomer(customer);
-    // Guardar en cache local silenciosamente
     await this.saveLocal(customer).catch(() => {});
 
     return customer;
@@ -70,11 +68,19 @@ export class CustomerRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const customer = await this.getById(id);
-    if (customer) {
-      customer.deleted = true;
-      customer.updatedAt = new Date().toISOString();
-      await this.save(customer);
-    }
+    await this.supabaseService.deleteRow('customers', id);
+    await this.deleteLocal(id).catch(() => {});
+  }
+
+  private async deleteLocal(id: string): Promise<void> {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.storeName, 'readwrite');
+      const store = transaction.objectStore(this.storeName);
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
   }
 }
