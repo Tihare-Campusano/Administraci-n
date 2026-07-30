@@ -116,6 +116,10 @@ export class SecurityService {
     return SecurityService.isAuthenticated;
   }
 
+  setAuthenticatedSession(auth: boolean): void {
+    SecurityService.isAuthenticated = auth;
+  }
+
   lockSession(): void {
     SecurityService.isAuthenticated = false;
   }

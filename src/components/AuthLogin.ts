@@ -82,10 +82,10 @@ export class AuthLogin {
     });
 
     if (mode === 'setup') {
-      title.textContent = 'Crea tu Contraseña de Acceso';
-      if (subtitle) subtitle.textContent = 'Configura una contraseña para proteger la aplicación (letras, números o caracteres).';
-      submitBtn.textContent = 'Guardar Contraseña';
-      if (passwordLabel) passwordLabel.textContent = 'Nueva Contraseña';
+      title.textContent = 'Crear Contraseña de Acceso';
+      if (subtitle) subtitle.textContent = 'Crea una contraseña (números o caracteres) que será almacenada en Supabase para el acceso a tu aplicación.';
+      submitBtn.textContent = 'Guardar Contraseña y Acceder';
+      if (passwordLabel) passwordLabel.textContent = 'Crear Contraseña';
 
       if (groupCurrent) groupCurrent.style.display = 'none';
       if (groupMain) groupMain.style.display = 'flex';

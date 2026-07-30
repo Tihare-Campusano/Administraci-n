@@ -152,16 +152,14 @@ async function init() {
       authLogin.show('lock');
     });
 
-    // Validar seguridad al iniciar:
-    // Si existe una contraseña configurada y la seguridad está activa, solicitar contraseña.
-    // De lo contrario (ej: primera vez que se abre la app), solicitar crear contraseña.
-    const isSecurityActive = await securityService.isSecurityEnabled();
     const hasPassword = await securityService.hasPasswordSet();
 
-    if (hasPassword && isSecurityActive) {
-      authLogin.show('lock');
-    } else if (!hasPassword) {
+    if (!hasPassword) {
+      // Si la base de datos de Supabase no tiene contraseña, pedir crear una
       authLogin.show('setup');
+    } else {
+      // Si la contraseña ya fue creada en Supabase, dar acceso directo a la app
+      securityService.setAuthenticatedSession(true);
     }
 
     setupTabNavigation();
