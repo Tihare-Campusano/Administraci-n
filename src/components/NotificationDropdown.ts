@@ -58,23 +58,37 @@ export class NotificationDropdown {
     const listContainer = document.getElementById('notification-list');
     if (!listContainer) return;
 
-    const notifications = await this.notificationService.getAllNotifications();
+    const allNotifications = await this.notificationService.getAllNotifications();
+    const unreadNotifications = allNotifications.filter(n => !n.read);
     await this.updateBadge();
 
-    if (notifications.length === 0) {
-      listContainer.innerHTML = '<div class="empty-notif">No tienes notificaciones pendientes 🎉</div>';
+    if (unreadNotifications.length === 0) {
+      listContainer.innerHTML = `
+        <div class="empty-notif">No tienes notificaciones sin leer 🎉</div>
+        <div style="padding: 8px 16px; text-align: center; border-top: 1px solid var(--border-glass);">
+          <button class="btn-text-sm btn-go-history" style="color: var(--accent); font-weight: 700;">📜 Ver Historial Completo</button>
+        </div>
+      `;
+      listContainer.querySelector('.btn-go-history')?.addEventListener('click', () => {
+        this.onNavigateTab('notifications');
+        document.getElementById('notification-dropdown')?.classList.remove('active');
+      });
       return;
     }
 
-    listContainer.innerHTML = notifications.slice(0, 10).map(n => `
-      <div class="notif-item ${n.read ? 'read' : 'unread'}" data-tab="${n.linkTab || ''}">
+    listContainer.innerHTML = unreadNotifications.slice(0, 8).map(n => `
+      <div class="notif-item unread" data-tab="${n.linkTab || ''}">
         <div class="notif-title-row">
           <span class="notif-title">${n.title}</span>
           <span class="notif-date">${formatDate(n.createdAt)}</span>
         </div>
         <div class="notif-message">${n.message}</div>
       </div>
-    `).join('');
+    `).join('') + `
+      <div style="padding: 10px 16px; text-align: center; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.15);">
+        <button class="btn-text-sm btn-go-history" style="color: var(--accent); font-weight: 700;">📜 Ver Historial Completo (${allNotifications.length})</button>
+      </div>
+    `;
 
     listContainer.querySelectorAll('.notif-item').forEach(item => {
       item.addEventListener('click', () => {
@@ -84,6 +98,11 @@ export class NotificationDropdown {
           document.getElementById('notification-dropdown')?.classList.remove('active');
         }
       });
+    });
+
+    listContainer.querySelector('.btn-go-history')?.addEventListener('click', () => {
+      this.onNavigateTab('notifications');
+      document.getElementById('notification-dropdown')?.classList.remove('active');
     });
   }
 }

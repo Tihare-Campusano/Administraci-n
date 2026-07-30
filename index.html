@@ -64,6 +64,12 @@
           </a>
         </li>
         <li>
+          <a class="nav-link" data-tab="notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            Notificaciones
+          </a>
+        </li>
+        <li>
           <a class="nav-link" data-tab="backup">
             <svg viewBox="0 0 24 24"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
             Respaldo / Ajustes
@@ -449,6 +455,75 @@
 
       <div class="catalog-grid" id="stock-grid">
         <!-- Dynamically populated stock items -->
+      </div>
+    </section>
+
+    <!-- 6.8. HISTORIAL DE NOTIFICACIONES Y CONEXION MULTICANAL -->
+    <section id="notifications" class="tab-content">
+      <header>
+        <div class="header-title">
+          <h1>Historial de Notificaciones & Canales</h1>
+          <p>Registro histórico de avisos, mensajes de redes sociales y alertas del sistema</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="btn-clear-all-notifs">
+            <span>Marcar Todas Leídas</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Filter Controls & Search -->
+      <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div class="samsung-pills-bar" id="notif-pills-bar">
+            <button class="samsung-pill active" data-filter="all">Todas</button>
+            <button class="samsung-pill" data-filter="unread">🔴 Sin Leer</button>
+            <button class="samsung-pill" data-filter="channel">💬 WhatsApp / Redes</button>
+            <button class="samsung-pill" data-filter="delivery">⏰ Entregas</button>
+            <button class="samsung-pill" data-filter="stock">⚠️ Stock Crítico</button>
+          </div>
+          <div style="flex: 1; max-width: 320px;">
+            <input type="text" id="notif-search-input" class="form-input" placeholder="🔍 Buscar notificación...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications Grid / List -->
+      <div id="notifs-full-list">
+        <!-- Dynamically populated full notifications -->
+      </div>
+
+      <!-- Tutorial de Conexión Multicanal Card -->
+      <div class="glass-card" style="margin-top: 2rem; border-color: rgba(16, 185, 129, 0.25); background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(19, 27, 46, 0.4) 100%);">
+        <h2 class="card-title" style="color: #10b981; margin-bottom: 12px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+          <span>🌐 Guía Paso a Paso: Cómo Conectar WhatsApp, Instagram, Facebook y Gmail</span>
+        </h2>
+        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; margin-bottom: 1rem;">
+          Para vincular tus cuentas reales y recibir pedidos directamente en tu comanda sin pasar por simulaciones, sigue esta guía:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem; color: var(--text-primary);">
+          <div style="background: rgba(0,0,0,0.25); padding: 12px 16px; border-radius: var(--radius-sm); border-left: 3px solid #25D366;">
+            <strong style="color: #25D366;">1. WhatsApp Business API (Meta Webhook):</strong>
+            <p style="color: var(--text-secondary); margin-top: 4px; line-height: 1.4;">
+              Accede a <code>developers.facebook.com</code> ➔ Crea una App de tipo "Negocios" ➔ Habilita el producto WhatsApp ➔ En la pestaña <strong>Webhooks</strong>, agrega la URL de tu servidor: <code>https://tu-dominio.com/api/webhook/whatsapp</code>. Cuando te envíen un mensaje, Meta enviará el evento directamente a FoodAdmin.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.25); padding: 12px 16px; border-radius: var(--radius-sm); border-left: 3px solid #E1306C;">
+            <strong style="color: #E1306C;">2. Instagram Direct & Facebook Messenger:</strong>
+            <p style="color: var(--text-secondary); margin-top: 4px; line-height: 1.4;">
+              Vincula tu Fanpage de Facebook e Instagram Professional con la misma App de Meta Developers ➔ Suscríbete al webhook <code>messages</code>. Al recibir un mensaje directo, FoodAdmin encenderá la luz roja en la campanita.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.25); padding: 12px 16px; border-radius: var(--radius-sm); border-left: 3px solid #EA4335;">
+            <strong style="color: #EA4335;">3. Gmail / Correo de Negocio:</strong>
+            <p style="color: var(--text-secondary); margin-top: 4px; line-height: 1.4;">
+              Ingresa a Google Cloud Console ➔ Habilita la API de Gmail ➔ Configura una notificación Push mediante Google Cloud Pub/Sub. Los correos entrantes llegarán como comanda pendiente.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -868,6 +943,8 @@
         </div>
       </form>
     </div>
+  </div>
+
   <!-- STOCK INGREDIENTS MODAL -->
   <div id="modal-stock" class="modal-overlay">
     <div class="glass-card modal-card">

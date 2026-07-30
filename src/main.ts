@@ -5,6 +5,7 @@ import { CatalogPage } from './pages/CatalogPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { NotesPage } from './pages/NotesPage';
 import { StockPage } from './pages/StockPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { BackupPage } from './pages/BackupPage';
 import { OrderModal } from './components/OrderModal';
 import { NotificationDropdown } from './components/NotificationDropdown';
@@ -24,6 +25,7 @@ const catalogPage = new CatalogPage();
 const clientsPage = new ClientsPage();
 const notesPage = new NotesPage();
 const stockPage = new StockPage();
+const notificationsPage = new NotificationsPage();
 const backupPage = new BackupPage();
 const orderModal = new OrderModal();
 const notificationDropdown = new NotificationDropdown();
@@ -89,6 +91,9 @@ function loadTabData(tabId: string) {
     case 'stock':
       stockPage.load();
       break;
+    case 'notifications':
+      notificationsPage.load();
+      break;
     case 'documentation':
       break;
   }
@@ -141,6 +146,7 @@ async function init() {
     clientsPage.init();
     notesPage.init();
     stockPage.init();
+    notificationsPage.init();
     notificationDropdown.init((tab) => switchTab(tab));
     
     // Link quick add client inside order modal
