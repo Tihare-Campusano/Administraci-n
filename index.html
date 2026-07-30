@@ -536,6 +536,18 @@
               </select>
             </div>
 
+            <!-- Fecha y Hora de Entrega -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="order-delivery-date">📅 Fecha de Entrega</label>
+                <input type="date" class="form-input" id="order-delivery-date">
+              </div>
+              <div class="form-group">
+                <label for="order-delivery-time">⏰ Hora de Entrega</label>
+                <input type="time" class="form-input" id="order-delivery-time" disabled>
+              </div>
+            </div>
+
             <!-- Delivery & Payment status -->
             <div class="form-row">
               <div class="form-group">
@@ -552,8 +564,8 @@
             </div>
 
             <div class="form-group">
-              <label for="order-notes">Notas / Dirección / Hora Especial</label>
-              <input type="text" class="form-input" id="order-notes" placeholder="Ej: Dedicatoria 'Felicidades', Entregar a las 16:00...">
+              <label for="order-notes">Notas / Dirección / Instrucciones</label>
+              <input type="text" class="form-input" id="order-notes" placeholder="Ej: Dedicatoria 'Felicidades', entregar en recepción...">
             </div>
 
             <!-- Visual checkout summary -->

@@ -20,6 +20,7 @@ export class OrderService {
     paymentMethod: string;
     paymentStatus: 'paid' | 'unpaid';
     notes: string;
+    deliveryAt?: string;
   }): Promise<Order> {
     if (data.items.length === 0) {
       throw new Error('Un pedido debe contener al menos un producto');
@@ -43,6 +44,7 @@ export class OrderService {
       paymentStatus: data.paymentStatus,
       status: 'pending',
       notes: data.notes,
+      deliveryAt: data.deliveryAt,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

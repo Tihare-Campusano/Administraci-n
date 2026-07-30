@@ -20,6 +20,20 @@ export class OrderModal {
     document.getElementById('btn-cancel-order')?.addEventListener('click', () => this.close());
     document.getElementById('order-delivery-fee')?.addEventListener('input', () => this.updateTotalsSummary());
     document.getElementById('order-form')?.addEventListener('submit', (e) => this.handleSubmit(e));
+
+    const dateInput = document.getElementById('order-delivery-date') as HTMLInputElement;
+    const timeInput = document.getElementById('order-delivery-time') as HTMLInputElement;
+    dateInput?.addEventListener('change', () => {
+      if (dateInput.value) {
+        timeInput.disabled = false;
+        if (!timeInput.value) {
+          timeInput.value = '12:00';
+        }
+      } else {
+        timeInput.disabled = true;
+        timeInput.value = '';
+      }
+    });
   }
 
   async open(orderId?: string): Promise<void> {
@@ -27,6 +41,14 @@ export class OrderModal {
     this.selectedProducts.clear();
     const form = document.getElementById('order-form') as HTMLFormElement;
     form?.reset();
+
+    const dateInput = document.getElementById('order-delivery-date') as HTMLInputElement;
+    const timeInput = document.getElementById('order-delivery-time') as HTMLInputElement;
+    if (dateInput) dateInput.value = '';
+    if (timeInput) {
+      timeInput.value = '';
+      timeInput.disabled = true;
+    }
 
     await this.populateClientsDropdown();
     await this.populateProductsSelector();
@@ -154,6 +176,23 @@ export class OrderModal {
     (document.getElementById('order-payment-status') as HTMLSelectElement).value = order.paymentStatus;
     (document.getElementById('order-notes') as HTMLInputElement).value = order.notes || '';
 
+    const dateInput = document.getElementById('order-delivery-date') as HTMLInputElement;
+    const timeInput = document.getElementById('order-delivery-time') as HTMLInputElement;
+    if (order.deliveryAt) {
+      const parts = order.deliveryAt.split('T');
+      if (dateInput) dateInput.value = parts[0] || '';
+      if (timeInput) {
+        timeInput.value = parts[1] || '';
+        timeInput.disabled = false;
+      }
+    } else {
+      if (dateInput) dateInput.value = '';
+      if (timeInput) {
+        timeInput.value = '';
+        timeInput.disabled = true;
+      }
+    }
+
     order.products.forEach((item: any) => {
       this.selectedProducts.set(item.productId, item.quantity);
       const span = document.getElementById(`builder-qty-${item.productId}`);
@@ -181,6 +220,10 @@ export class OrderModal {
       const deliveryFee = parseFloat((document.getElementById('order-delivery-fee') as HTMLInputElement).value) || 0;
       const paymentStatus = (document.getElementById('order-payment-status') as HTMLSelectElement).value as 'paid' | 'unpaid';
       const notes = (document.getElementById('order-notes') as HTMLInputElement).value;
+      const dateVal = (document.getElementById('order-delivery-date') as HTMLInputElement).value;
+      const timeVal = (document.getElementById('order-delivery-time') as HTMLInputElement).value;
+      const deliveryAt = dateVal ? `${dateVal}T${timeVal || '12:00'}` : undefined;
+
       const products = await this.productService.getAllProducts();
 
       const items: OrderItem[] = [];
@@ -204,7 +247,8 @@ export class OrderModal {
             total: subtotal + deliveryFee,
             deliveryFee,
             paymentStatus,
-            notes
+            notes,
+            deliveryAt
           });
         }
       } else {
@@ -216,7 +260,8 @@ export class OrderModal {
           deliveryFee,
           paymentMethod: 'efectivo',
           paymentStatus,
-          notes
+          notes,
+          deliveryAt
         });
       }
 

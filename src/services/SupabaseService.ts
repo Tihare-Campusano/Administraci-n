@@ -336,6 +336,9 @@ export class SupabaseService {
       notes:
         item.notes ?? '',
 
+      deliveryAt:
+        item.delivery_at ?? item.deliveryAt ?? undefined,
+
       createdAt:
         item.created_at,
 
@@ -391,6 +394,9 @@ export class SupabaseService {
 
       notes:
         order.notes ?? '',
+
+      delivery_at:
+        order.deliveryAt ?? null,
 
       created_at:
         order.createdAt,

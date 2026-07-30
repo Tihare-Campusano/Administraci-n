@@ -111,13 +111,15 @@ export class NotesPage {
 
       return `
         <div class="samsung-note-card ${isPinned ? 'pinned' : ''}" data-id="${id}" style="--note-color: ${color};">
-          <div class="note-header">
-            <span class="note-category-badge">${category}</span>
+          <div class="note-top-header">
+            <h3 class="note-title" title="${title}">${title}</h3>
             <button class="note-pin-btn ${isPinned ? 'active' : ''}" data-id="${id}" title="${isPinned ? 'Desmarcar destacada' : 'Destacar nota'}">
               ${isPinned ? '⭐' : '☆'}
             </button>
           </div>
-          <h3 class="note-title">${title}</h3>
+          <div class="note-category-row">
+            <span class="note-category-badge">${category}</span>
+          </div>
           ${content ? `<p class="note-content-preview">${content}</p>` : ''}
           ${checklistHtml}
           <div class="note-footer">

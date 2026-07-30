@@ -51,11 +51,13 @@ CREATE TABLE IF NOT EXISTS public.orders (
     payment_status TEXT DEFAULT 'unpaid',
     status TEXT DEFAULT 'pending',
     notes TEXT DEFAULT '',
+    delivery_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     completed_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted BOOLEAN DEFAULT FALSE
 );
+
 
 -- 5. TABLA DE GASTOS
 CREATE TABLE IF NOT EXISTS public.expenses (

@@ -18,6 +18,7 @@ export interface Order {
   paymentStatus: 'paid' | 'unpaid';
   status: 'pending' | 'completed' | 'cancelled';
   notes: string;
+  deliveryAt?: string;
   createdAt: string;
   completedAt?: string;
   updatedAt: string;

@@ -68,6 +68,18 @@ export class ActiveOrdersPage {
       const orderNum = order.orderNumber || order.order_number || 'S/N';
       const createdAt = order.createdAt || order.created_at || new Date().toISOString();
       const total = order.total || 0;
+      const deliveryAt = order.deliveryAt || order.delivery_at;
+      let deliveryBadge = '';
+      if (deliveryAt) {
+        const dateObj = new Date(deliveryAt);
+        const formattedDelivery = isNaN(dateObj.getTime()) ? deliveryAt : dateObj.toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        deliveryBadge = `<div style="font-size:0.8rem; color:#ec4899; background:rgba(236,72,153,0.1); border:1px solid rgba(236,72,153,0.25); padding:4px 8px; border-radius:8px; margin-top:6px; font-weight:600; display:inline-flex; align-items:center; gap:6px;">⏰ Entrega: ${formattedDelivery}</div>`;
+      }
 
       return `
         <div class="glass-card order-card ${paymentStatus}" id="order-card-${order.id}">
@@ -79,6 +91,7 @@ export class ActiveOrdersPage {
             ${paymentBadge}
           </div>
           <div class="order-client">👤 <strong>${clientName}</strong></div>
+          ${deliveryBadge}
           <div class="order-items">${itemsMarkup}</div>
           ${order.notes ? `<div style="font-size:0.8rem; color:var(--text-secondary); background:rgba(255,255,255,0.02); padding:6px 10px; border-radius:var(--radius-sm); margin-top:4px;">📝 <em>${order.notes}</em></div>` : ''}
           <div class="order-summary">
