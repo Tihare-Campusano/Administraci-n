@@ -527,41 +527,30 @@ export class SupabaseService {
   }
 
   async saveNote(note: any): Promise<void> {
+    const payload: any = {
+      id: note.id,
+      title: note.title,
+      content: note.content ?? '',
+      items: note.items ?? [],
+      category: note.category ?? 'General',
+      is_pinned: note.isPinned ?? false,
+      color: note.color ?? '#ec4899',
+      created_at: note.createdAt,
+      updated_at: note.updatedAt,
+      deleted: note.deleted ?? false
+    };
 
-    await this.save('notes', {
-
-      id:
-        note.id,
-
-      title:
-        note.title,
-
-      content:
-        note.content ?? '',
-
-      items:
-        note.items ?? [],
-
-      category:
-        note.category ?? 'General',
-
-      is_pinned:
-        note.isPinned ?? false,
-
-      color:
-        note.color ?? '#ec4899',
-
-      created_at:
-        note.createdAt,
-
-      updated_at:
-        note.updatedAt,
-
-      deleted:
-        note.deleted ?? false
-
-    });
-
+    try {
+      await this.save('notes', payload);
+    } catch (e: any) {
+      // Si la tabla 'notes' en Supabase aún no tiene la columna 'items', reintentar sin 'items'
+      if (e?.message?.includes('items') || e?.details?.includes('items')) {
+        delete payload.items;
+        await this.save('notes', payload).catch(() => {});
+      } else {
+        throw e;
+      }
+    }
   }
 
   //===========================================
