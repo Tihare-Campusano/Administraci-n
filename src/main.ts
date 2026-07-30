@@ -153,12 +153,17 @@ async function init() {
     });
 
     const hasPassword = await securityService.hasPasswordSet();
+    const isEnabled = await securityService.isSecurityEnabled();
 
-    if (!hasPassword) {
-      // Si la base de datos de Supabase no tiene contraseña, pedir crear una
+    if (hasPassword && isEnabled) {
+      // Si la contraseña está configurada y la seguridad activa, solicitar inicio de sesión
+      securityService.lockSession();
+      authLogin.show('lock');
+    } else if (!hasPassword && isEnabled) {
+      // Si no hay contraseña creada, solicitar crear una
       authLogin.show('setup');
     } else {
-      // Si la contraseña ya fue creada en Supabase, dar acceso directo a la app
+      // Si la seguridad fue desactivada por el usuario
       securityService.setAuthenticatedSession(true);
     }
 
