@@ -84,7 +84,7 @@ export class SupabaseService {
 
       payload.updated_at = new Date().toISOString();
 
-      if (!payload.created_at) {
+      if (!payload.created_at && table !== 'app_settings') {
         payload.created_at = new Date().toISOString();
       }
 
@@ -649,5 +649,12 @@ export class SupabaseService {
       payload
     );
 
+  }
+
+  async deleteSetting(key: string): Promise<void> {
+    try {
+      const client = this.getClient();
+      await client.from('app_settings').delete().eq('key', key);
+    } catch (e) {}
   }
 }

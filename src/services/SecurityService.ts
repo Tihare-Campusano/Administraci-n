@@ -22,11 +22,15 @@ export class SecurityService {
         await this.repository.setVal(this.PASSWORD_HASH_KEY, remoteHash);
         await this.repository.setVal(this.ENABLED_KEY, true);
         return true;
+      } else {
+        // Si Supabase no tiene la clave en app_settings, se elimina la contraseña local obsoleta
+        await this.repository.deleteVal(this.PASSWORD_HASH_KEY);
+        return false;
       }
-    } catch (e) {}
-
-    const localHash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
-    return !!localHash;
+    } catch (e) {
+      const localHash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
+      return !!localHash;
+    }
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -91,7 +95,7 @@ export class SecurityService {
   async disableSecurity(currentPassword: string): Promise<boolean> {
     const isValid = await this.validatePassword(currentPassword);
     if (isValid) {
-      await this.supabaseService.saveSetting(this.PASSWORD_HASH_KEY, null);
+      await this.supabaseService.deleteSetting(this.PASSWORD_HASH_KEY);
       await this.repository.setVal(this.ENABLED_KEY, false);
       await this.repository.deleteVal(this.PASSWORD_HASH_KEY);
       SecurityService.isAuthenticated = false;
