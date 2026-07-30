@@ -9,31 +9,32 @@ export class CustomerRepository {
   async getAll(): Promise<Customer[]> {
     try {
       const remote = await this.supabaseService.getCustomers();
-      if (remote.length > 0) {
-        for (const item of remote) {
-          await this.saveLocal(item);
-        }
-        return remote.filter(c => !c.deleted);
+      for (const item of remote) {
+        await this.saveLocal(item).catch(() => {});
       }
+      return remote.filter(c => !c.deleted);
     } catch (e) {
-      console.warn('CustomerRepository remote getAll fallback:', e);
+      return this.getLocalAll();
     }
-    return this.getLocalAll();
   }
 
   private async getLocalAll(): Promise<Customer[]> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, 'readonly');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.getAll();
+    try {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(this.storeName, 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.getAll();
 
-      request.onsuccess = () => {
-        const list: Customer[] = request.result || [];
-        resolve(list.filter(c => !c.deleted));
-      };
-      request.onerror = () => reject(request.error);
-    });
+        request.onsuccess = () => {
+          const list: Customer[] = request.result || [];
+          resolve(list.filter(c => !c.deleted));
+        };
+        request.onerror = () => reject(request.error);
+      });
+    } catch {
+      return [];
+    }
   }
 
   async getById(id: string): Promise<Customer | undefined> {
@@ -48,11 +49,10 @@ export class CustomerRepository {
       customer.deleted = false;
     }
     
-    // Save to local IndexedDB
-    await this.saveLocal(customer);
-
-    // Save to Supabase Cloud
+    // Guardar directamente en Supabase (base de datos primaria)
     await this.supabaseService.saveCustomer(customer);
+    // Guardar en cache local silenciosamente
+    await this.saveLocal(customer).catch(() => {});
 
     return customer;
   }

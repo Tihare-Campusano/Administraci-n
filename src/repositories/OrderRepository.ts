@@ -9,31 +9,32 @@ export class OrderRepository {
   async getAll(): Promise<Order[]> {
     try {
       const remote = await this.supabaseService.getOrders();
-      if (remote.length > 0) {
-        for (const item of remote) {
-          await this.saveLocal(item);
-        }
-        return remote.filter(o => !o.deleted);
+      for (const item of remote) {
+        await this.saveLocal(item).catch(() => {});
       }
+      return remote.filter(o => !o.deleted);
     } catch (e) {
-      console.warn('OrderRepository remote getAll fallback:', e);
+      return this.getLocalAll();
     }
-    return this.getLocalAll();
   }
 
   private async getLocalAll(): Promise<Order[]> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, 'readonly');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.getAll();
+    try {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(this.storeName, 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.getAll();
 
-      request.onsuccess = () => {
-        const list: Order[] = request.result || [];
-        resolve(list.filter(o => !o.deleted));
-      };
-      request.onerror = () => reject(request.error);
-    });
+        request.onsuccess = () => {
+          const list: Order[] = request.result || [];
+          resolve(list.filter(o => !o.deleted));
+        };
+        request.onerror = () => reject(request.error);
+      });
+    } catch {
+      return [];
+    }
   }
 
   async getById(id: string): Promise<Order | undefined> {
@@ -48,8 +49,10 @@ export class OrderRepository {
       order.deleted = false;
     }
 
-    await this.saveLocal(order);
+    // Guardar directamente en Supabase (base de datos primaria)
     await this.supabaseService.saveOrder(order);
+    // Guardar en cache local silenciosamente
+    await this.saveLocal(order).catch(() => {});
 
     return order;
   }

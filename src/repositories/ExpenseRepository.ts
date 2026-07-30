@@ -9,31 +9,32 @@ export class ExpenseRepository {
   async getAll(): Promise<Expense[]> {
     try {
       const remote = await this.supabaseService.getExpenses();
-      if (remote.length > 0) {
-        for (const item of remote) {
-          await this.saveLocal(item);
-        }
-        return remote.filter(e => !e.deleted);
+      for (const item of remote) {
+        await this.saveLocal(item).catch(() => {});
       }
+      return remote.filter(e => !e.deleted);
     } catch (e) {
-      console.warn('ExpenseRepository remote getAll fallback:', e);
+      return this.getLocalAll();
     }
-    return this.getLocalAll();
   }
 
   private async getLocalAll(): Promise<Expense[]> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, 'readonly');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.getAll();
+    try {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(this.storeName, 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.getAll();
 
-      request.onsuccess = () => {
-        const list: Expense[] = request.result || [];
-        resolve(list.filter(e => !e.deleted));
-      };
-      request.onerror = () => reject(request.error);
-    });
+        request.onsuccess = () => {
+          const list: Expense[] = request.result || [];
+          resolve(list.filter(e => !e.deleted));
+        };
+        request.onerror = () => reject(request.error);
+      });
+    } catch {
+      return [];
+    }
   }
 
   async getById(id: string): Promise<Expense | undefined> {
@@ -52,8 +53,10 @@ export class ExpenseRepository {
       expense.deleted = false;
     }
 
-    await this.saveLocal(expense);
+    // Guardar directamente en Supabase (base de datos primaria)
     await this.supabaseService.saveExpense(expense);
+    // Guardar en cache local silenciosamente
+    await this.saveLocal(expense).catch(() => {});
 
     return expense;
   }

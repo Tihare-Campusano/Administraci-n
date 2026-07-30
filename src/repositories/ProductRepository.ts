@@ -9,31 +9,32 @@ export class ProductRepository {
   async getAll(): Promise<Product[]> {
     try {
       const remote = await this.supabaseService.getProducts();
-      if (remote.length > 0) {
-        for (const item of remote) {
-          await this.saveLocal(item);
-        }
-        return remote.filter(p => !p.deleted);
+      for (const item of remote) {
+        await this.saveLocal(item).catch(() => {});
       }
+      return remote.filter(p => !p.deleted);
     } catch (e) {
-      console.warn('ProductRepository remote getAll fallback:', e);
+      return this.getLocalAll();
     }
-    return this.getLocalAll();
   }
 
   private async getLocalAll(): Promise<Product[]> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, 'readonly');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.getAll();
+    try {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(this.storeName, 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.getAll();
 
-      request.onsuccess = () => {
-        const list: Product[] = request.result || [];
-        resolve(list.filter(p => !p.deleted));
-      };
-      request.onerror = () => reject(request.error);
-    });
+        request.onsuccess = () => {
+          const list: Product[] = request.result || [];
+          resolve(list.filter(p => !p.deleted));
+        };
+        request.onerror = () => reject(request.error);
+      });
+    } catch {
+      return [];
+    }
   }
 
   async getById(id: string): Promise<Product | undefined> {
@@ -48,8 +49,10 @@ export class ProductRepository {
       product.deleted = false;
     }
 
-    await this.saveLocal(product);
+    // Guardar directamente en Supabase (base de datos primaria)
     await this.supabaseService.saveProduct(product);
+    // Guardar en cache local silenciosamente
+    await this.saveLocal(product).catch(() => {});
 
     return product;
   }

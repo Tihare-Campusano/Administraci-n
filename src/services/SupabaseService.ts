@@ -2,403 +2,625 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Logger } from '../utils/Logger';
 
 export const SUPABASE_URL = 'https://atmnawbmvvfjdkkwkdwm.supabase.co';
-export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0bW5hd2JtdnZfamRra3drZHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxOTQ5MjIsImV4cCI6MjEwMDc3MDkyMn0.UX58TjLoemo6_OlosbUCW3Odm5Y1EW7xrch3kqgE-d8';
+export const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0bW5hd2JtdnZmamRra3drZHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxOTQ5MjIsImV4cCI6MjEwMDc3MDkyMn0.UX58TjLoemo6_OlosbUCW3Odm5Y1EW7xrch3kqgE-d8';
 
 export class SupabaseService {
   private static instance: SupabaseClient | null = null;
 
   public getClient(): SupabaseClient {
     if (!SupabaseService.instance) {
-      SupabaseService.instance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      Logger.info('system', 'INITIALIZE_SUPABASE_CLIENT', { url: SUPABASE_URL });
+      SupabaseService.instance = createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      Logger.info(
+        'system',
+        'INITIALIZE_SUPABASE_CLIENT',
+        { url: SUPABASE_URL }
+      );
     }
+
     return SupabaseService.instance;
   }
 
-  // --- CUSTOMERS ---
-  async getCustomers(): Promise<any[]> {
+  //===========================================
+  // MÉTODOS GENÉRICOS
+  //===========================================
+
+  private async getAll(table: string): Promise<any[]> {
     const startTime = performance.now();
+
     try {
       const client = this.getClient();
-      const { data, error } = await client.from('customers').select('*');
+
+      const { data, error } = await client
+        .from(table)
+        .select('*')
+        .eq('deleted', false);
+
       const durationMs = Math.round(performance.now() - startTime);
 
       if (error) {
-        Logger.error('customers', 'SELECT', null, error, durationMs);
+        Logger.error(table, 'SELECT', null, error, durationMs);
         throw error;
       }
 
-      const mapped = (data || []).map(item => ({
-        id: item.id,
-        name: item.name,
-        phone: item.phone || '',
-        address: item.address || '',
-        notes: item.notes || '',
-        createdAt: item.created_at || item.createdAt || new Date().toISOString(),
-        updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
-        deleted: item.deleted || false
-      }));
+      Logger.info(
+        table,
+        'SELECT',
+        { count: data?.length ?? 0 },
+        data,
+        durationMs
+      );
 
-      Logger.info('customers', 'SELECT', { count: mapped.length }, mapped, durationMs);
-      return mapped;
+      return data ?? [];
     } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.warn('customers', 'SELECT_FALLBACK', null, e, durationMs);
+      Logger.error(table, 'SELECT_EXCEPTION', null, e);
       return [];
     }
+  }
+
+  private async save(
+    table: string,
+    payload: any
+  ): Promise<void> {
+    const startTime = performance.now();
+
+    try {
+
+      if (!payload.id && table !== 'app_settings') {
+        throw new Error(`El registro de ${table} no tiene ID.`);
+      }
+
+      payload.updated_at = new Date().toISOString();
+
+      if (!payload.created_at) {
+        payload.created_at = new Date().toISOString();
+      }
+
+      const client = this.getClient();
+
+      const options =
+        table === 'app_settings'
+          ? { onConflict: 'key' }
+          : { onConflict: 'id' };
+
+      const { data, error } =
+        await client
+          .from(table)
+          .upsert(payload, options)
+          .select();
+
+      const durationMs = Math.round(
+        performance.now() - startTime
+      );
+
+      if (error) {
+        Logger.error(
+          table,
+          'UPSERT',
+          payload,
+          error,
+          durationMs
+        );
+        throw error;
+      }
+
+      Logger.info(
+        table,
+        'UPSERT',
+        payload,
+        data,
+        durationMs
+      );
+
+    } catch (e: any) {
+
+      Logger.error(
+        table,
+        'UPSERT_EXCEPTION',
+        payload,
+        e
+      );
+
+      throw e;
+    }
+  }
+
+  //===========================================
+  // CUSTOMERS
+  //===========================================
+
+  async getCustomers(): Promise<any[]> {
+
+    const rows = await this.getAll('customers');
+
+    return rows.map(item => ({
+      id: item.id,
+      name: item.name,
+      phone: item.phone ?? '',
+      address: item.address ?? '',
+      notes: item.notes ?? '',
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+      deleted: item.deleted ?? false
+    }));
+
   }
 
   async saveCustomer(customer: any): Promise<void> {
-    const startTime = performance.now();
-    const payload = {
+
+    await this.save('customers', {
+
       id: customer.id,
+
       name: customer.name,
-      phone: customer.phone || '',
-      address: customer.address || '',
-      notes: customer.notes || '',
-      created_at: customer.createdAt,
-      updated_at: customer.updatedAt,
-      deleted: customer.deleted || false
-    };
 
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('customers').upsert(payload).select();
-      const durationMs = Math.round(performance.now() - startTime);
+      phone: customer.phone ?? '',
 
-      if (error) {
-        Logger.error('customers', 'UPSERT', payload, error, durationMs);
-        throw error;
-      }
+      address: customer.address ?? '',
 
-      Logger.info('customers', 'UPSERT', payload, data, durationMs);
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.error('customers', 'UPSERT_EXCEPTION', payload, e, durationMs);
-    }
+      notes: customer.notes ?? '',
+
+      created_at:
+        customer.createdAt,
+
+      updated_at:
+        customer.updatedAt,
+
+      deleted:
+        customer.deleted ?? false
+
+    });
+
   }
 
-  // --- PRODUCTS ---
+  //===========================================
+  // PRODUCTS
+  //===========================================
+
   async getProducts(): Promise<any[]> {
-    const startTime = performance.now();
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('products').select('*');
-      const durationMs = Math.round(performance.now() - startTime);
 
-      if (error) {
-        Logger.error('products', 'SELECT', null, error, durationMs);
-        throw error;
-      }
+    const rows =
+      await this.getAll('products');
 
-      const mapped = (data || []).map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description || '',
-        price: Number(item.price) || 0,
-        cost: Number(item.cost) || 0,
-        category: item.category || 'General',
-        available: item.available !== false,
-        image: item.image || '',
-        createdAt: item.created_at || item.createdAt || new Date().toISOString(),
-        updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
-        deleted: item.deleted || false
-      }));
+    return rows.map(item => ({
 
-      Logger.info('products', 'SELECT', { count: mapped.length }, mapped, durationMs);
-      return mapped;
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.warn('products', 'SELECT_FALLBACK', null, e, durationMs);
-      return [];
-    }
+      id: item.id,
+
+      name: item.name,
+
+      description:
+        item.description ?? '',
+
+      price:
+        Number(item.price) || 0,
+
+      cost:
+        Number(item.cost) || 0,
+
+      category:
+        item.category ?? 'General',
+
+      available:
+        item.available !== false,
+
+      image:
+        item.image ?? '',
+
+      createdAt:
+        item.created_at,
+
+      updatedAt:
+        item.updated_at,
+
+      deleted:
+        item.deleted ?? false
+
+    }));
+
   }
 
   async saveProduct(product: any): Promise<void> {
-    const startTime = performance.now();
-    const payload = {
+
+    await this.save('products', {
+
       id: product.id,
+
       name: product.name,
-      description: product.description || '',
-      price: Number(product.price) || 0,
-      cost: Number(product.cost) || 0,
-      category: product.category || 'General',
-      available: product.available !== false,
-      image: product.image || '',
-      created_at: product.createdAt,
-      updated_at: product.updatedAt,
-      deleted: product.deleted || false
-    };
 
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('products').upsert(payload).select();
-      const durationMs = Math.round(performance.now() - startTime);
+      description:
+        product.description ?? '',
 
-      if (error) {
-        Logger.error('products', 'UPSERT', payload, error, durationMs);
-        throw error;
-      }
+      price:
+        Number(product.price) || 0,
 
-      Logger.info('products', 'UPSERT', payload, data, durationMs);
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.error('products', 'UPSERT_EXCEPTION', payload, e, durationMs);
-    }
+      cost:
+        Number(product.cost) || 0,
+
+      category:
+        product.category ?? 'General',
+
+      available:
+        product.available !== false,
+
+      image:
+        product.image ?? '',
+
+      created_at:
+        product.createdAt,
+
+      updated_at:
+        product.updatedAt,
+
+      deleted:
+        product.deleted ?? false
+
+    });
+
   }
 
-  // --- ORDERS ---
+  //===========================================
+  // ORDERS
+  //===========================================
+
   async getOrders(): Promise<any[]> {
-    const startTime = performance.now();
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('orders').select('*');
-      const durationMs = Math.round(performance.now() - startTime);
 
-      if (error) {
-        Logger.error('orders', 'SELECT', null, error, durationMs);
-        throw error;
-      }
+    const rows = await this.getAll('orders');
 
-      const mapped = (data || []).map(item => ({
-        id: item.id,
-        orderNumber: item.order_number || item.orderNumber || 1,
-        customerId: item.customer_id || item.customerId,
-        products: typeof item.products === 'string' ? JSON.parse(item.products) : (item.products || []),
-        subtotal: Number(item.subtotal) || 0,
-        discount: Number(item.discount) || 0,
-        deliveryFee: Number(item.delivery_fee) || Number(item.deliveryFee) || 0,
-        total: Number(item.total) || 0,
-        paymentMethod: item.payment_method || item.paymentMethod || 'Efectivo',
-        paymentStatus: item.payment_status || item.paymentStatus || 'unpaid',
-        status: item.status || 'pending',
-        notes: item.notes || '',
-        createdAt: item.created_at || item.createdAt || new Date().toISOString(),
-        completedAt: item.completed_at || item.completedAt,
-        updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
-        deleted: item.deleted || false
-      }));
+    return rows.map(item => ({
 
-      Logger.info('orders', 'SELECT', { count: mapped.length }, mapped, durationMs);
-      return mapped;
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.warn('orders', 'SELECT_FALLBACK', null, e, durationMs);
-      return [];
-    }
+      id: item.id,
+
+      orderNumber:
+        item.order_number ?? 1,
+
+      customerId:
+        item.customer_id ?? null,
+
+      products:
+        Array.isArray(item.products)
+          ? item.products
+          : (item.products ?? []),
+
+      subtotal:
+        Number(item.subtotal) || 0,
+
+      discount:
+        Number(item.discount) || 0,
+
+      deliveryFee:
+        Number(item.delivery_fee) || 0,
+
+      total:
+        Number(item.total) || 0,
+
+      paymentMethod:
+        item.payment_method ?? 'Efectivo',
+
+      paymentStatus:
+        item.payment_status ?? 'unpaid',
+
+      status:
+        item.status ?? 'pending',
+
+      notes:
+        item.notes ?? '',
+
+      createdAt:
+        item.created_at,
+
+      completedAt:
+        item.completed_at,
+
+      updatedAt:
+        item.updated_at,
+
+      deleted:
+        item.deleted ?? false
+
+    }));
+
   }
 
   async saveOrder(order: any): Promise<void> {
-    const startTime = performance.now();
-    const payload = {
-      id: order.id,
-      order_number: order.orderNumber,
-      customer_id: order.customerId,
-      products: order.products,
-      subtotal: order.subtotal,
-      discount: order.discount,
-      delivery_fee: order.deliveryFee,
-      total: order.total,
-      payment_method: order.paymentMethod,
-      payment_status: order.paymentStatus,
-      status: order.status,
-      notes: order.notes || '',
-      created_at: order.createdAt,
-      completed_at: order.completedAt || null,
-      updated_at: order.updatedAt,
-      deleted: order.deleted || false
-    };
 
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('orders').upsert(payload).select();
-      const durationMs = Math.round(performance.now() - startTime);
+    await this.save('orders', {
 
-      if (error) {
-        Logger.error('orders', 'UPSERT', payload, error, durationMs);
-        throw error;
-      }
+      id:
+        order.id,
 
-      Logger.info('orders', 'UPSERT', payload, data, durationMs);
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.error('orders', 'UPSERT_EXCEPTION', payload, e, durationMs);
-    }
+      order_number:
+        order.orderNumber ?? 1,
+
+      customer_id:
+        order.customerId ?? null,
+
+      products:
+        order.products ?? [],
+
+      subtotal:
+        Number(order.subtotal) || 0,
+
+      discount:
+        Number(order.discount) || 0,
+
+      delivery_fee:
+        Number(order.deliveryFee) || 0,
+
+      total:
+        Number(order.total) || 0,
+
+      payment_method:
+        order.paymentMethod ?? 'Efectivo',
+
+      payment_status:
+        order.paymentStatus ?? 'unpaid',
+
+      status:
+        order.status ?? 'pending',
+
+      notes:
+        order.notes ?? '',
+
+      created_at:
+        order.createdAt,
+
+      completed_at:
+        order.completedAt ?? null,
+
+      updated_at:
+        order.updatedAt,
+
+      deleted:
+        order.deleted ?? false
+
+    });
+
   }
 
-  // --- EXPENSES ---
+  //===========================================
+  // EXPENSES
+  //===========================================
+
   async getExpenses(): Promise<any[]> {
-    const startTime = performance.now();
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('expenses').select('*');
-      const durationMs = Math.round(performance.now() - startTime);
 
-      if (error) {
-        Logger.error('expenses', 'SELECT', null, error, durationMs);
-        throw error;
-      }
+    const rows =
+      await this.getAll('expenses');
 
-      const mapped = (data || []).map(item => ({
-        id: item.id,
-        title: item.title,
-        amount: Number(item.amount) || 0,
-        category: item.category || 'General',
-        date: item.date || item.created_at,
-        createdAt: item.created_at || item.createdAt || new Date().toISOString(),
-        updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
-        deleted: item.deleted || false
-      }));
+    return rows.map(item => ({
 
-      Logger.info('expenses', 'SELECT', { count: mapped.length }, mapped, durationMs);
-      return mapped;
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.warn('expenses', 'SELECT_FALLBACK', null, e, durationMs);
-      return [];
-    }
+      id:
+        item.id,
+
+      title:
+        item.title,
+
+      amount:
+        Number(item.amount) || 0,
+
+      category:
+        item.category ?? 'General',
+
+      date:
+        item.date,
+
+      createdAt:
+        item.created_at,
+
+      updatedAt:
+        item.updated_at,
+
+      deleted:
+        item.deleted ?? false
+
+    }));
+
   }
 
   async saveExpense(expense: any): Promise<void> {
-    const startTime = performance.now();
-    const payload = {
-      id: expense.id,
-      title: expense.title,
-      amount: expense.amount,
-      category: expense.category || 'General',
-      date: expense.date,
-      created_at: expense.createdAt || new Date().toISOString(),
-      updated_at: expense.updatedAt || new Date().toISOString(),
-      deleted: expense.deleted || false
-    };
 
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('expenses').upsert(payload).select();
-      const durationMs = Math.round(performance.now() - startTime);
+    await this.save('expenses', {
 
-      if (error) {
-        Logger.error('expenses', 'UPSERT', payload, error, durationMs);
-        throw error;
-      }
+      id:
+        expense.id,
 
-      Logger.info('expenses', 'UPSERT', payload, data, durationMs);
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.error('expenses', 'UPSERT_EXCEPTION', payload, e, durationMs);
-    }
+      title:
+        expense.title,
+
+      amount:
+        Number(expense.amount) || 0,
+
+      category:
+        expense.category ?? 'General',
+
+      date:
+        expense.date ?? new Date().toISOString(),
+
+      created_at:
+        expense.createdAt,
+
+      updated_at:
+        expense.updatedAt,
+
+      deleted:
+        expense.deleted ?? false
+
+    });
+
   }
 
-  // --- NOTES ---
+  //===========================================
+  // NOTES
+  //===========================================
+
   async getNotes(): Promise<any[]> {
-    const startTime = performance.now();
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('notes').select('*');
-      const durationMs = Math.round(performance.now() - startTime);
 
-      if (error) {
-        Logger.error('notes', 'SELECT', null, error, durationMs);
-        throw error;
-      }
+    const rows =
+      await this.getAll('notes');
 
-      const mapped = (data || []).map(item => ({
-        id: item.id,
-        title: item.title,
-        content: item.content || '',
-        items: typeof item.items === 'string' ? JSON.parse(item.items) : (item.items || []),
-        category: item.category || 'General',
-        isPinned: item.is_pinned !== undefined ? item.is_pinned : (item.isPinned || false),
-        color: item.color || '#ec4899',
-        createdAt: item.created_at || item.createdAt || new Date().toISOString(),
-        updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
-        deleted: item.deleted || false
-      }));
+    return rows.map(item => ({
 
-      Logger.info('notes', 'SELECT', { count: mapped.length }, mapped, durationMs);
-      return mapped;
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.warn('notes', 'SELECT_FALLBACK', null, e, durationMs);
-      return [];
-    }
+      id:
+        item.id,
+
+      title:
+        item.title,
+
+      content:
+        item.content ?? '',
+
+      items:
+        Array.isArray(item.items)
+          ? item.items
+          : (item.items ?? []),
+
+      category:
+        item.category ?? 'General',
+
+      isPinned:
+        item.is_pinned ?? false,
+
+      color:
+        item.color ?? '#ec4899',
+
+      createdAt:
+        item.created_at,
+
+      updatedAt:
+        item.updated_at,
+
+      deleted:
+        item.deleted ?? false
+
+    }));
+
   }
 
   async saveNote(note: any): Promise<void> {
-    const startTime = performance.now();
-    const payload = {
-      id: note.id,
-      title: note.title,
-      content: note.content || '',
-      items: note.items || [],
-      category: note.category || 'General',
-      is_pinned: note.isPinned !== undefined ? note.isPinned : false,
-      color: note.color || '#ec4899',
-      created_at: note.createdAt,
-      updated_at: note.updatedAt,
-      deleted: note.deleted || false
-    };
 
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('notes').upsert(payload).select();
-      const durationMs = Math.round(performance.now() - startTime);
+    await this.save('notes', {
 
-      if (error) {
-        Logger.error('notes', 'UPSERT', payload, error, durationMs);
-        throw error;
-      }
+      id:
+        note.id,
 
-      Logger.info('notes', 'UPSERT', payload, data, durationMs);
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.error('notes', 'UPSERT_EXCEPTION', payload, e, durationMs);
-    }
+      title:
+        note.title,
+
+      content:
+        note.content ?? '',
+
+      items:
+        note.items ?? [],
+
+      category:
+        note.category ?? 'General',
+
+      is_pinned:
+        note.isPinned ?? false,
+
+      color:
+        note.color ?? '#ec4899',
+
+      created_at:
+        note.createdAt,
+
+      updated_at:
+        note.updatedAt,
+
+      deleted:
+        note.deleted ?? false
+
+    });
+
   }
 
-  // --- APP SETTINGS / SECURITY ---
+  //===========================================
+  // APP SETTINGS
+  //===========================================
+
   async getSetting(key: string): Promise<any | null> {
+
     const startTime = performance.now();
+
     try {
+
       const client = this.getClient();
-      const { data, error } = await client.from('app_settings').select('value').eq('key', key).single();
-      const durationMs = Math.round(performance.now() - startTime);
+
+      const { data, error } = await client
+        .from('app_settings')
+        .select('value')
+        .eq('key', key)
+        .single();
+
+      const durationMs =
+        Math.round(performance.now() - startTime);
 
       if (error) {
+
         if (error.code !== 'PGRST116') {
-          Logger.warn('settings', 'SELECT_SETTING', { key }, error, durationMs);
+
+          Logger.warn(
+            'settings',
+            'GET_SETTING',
+            { key },
+            error,
+            durationMs
+          );
+
         }
+
         return null;
+
       }
 
-      return data ? data.value : null;
+      Logger.info(
+        'settings',
+        'GET_SETTING',
+        { key },
+        data,
+        durationMs
+      );
+
+      return data?.value ?? null;
+
     } catch (e: any) {
+
+      Logger.error(
+        'settings',
+        'GET_SETTING_EXCEPTION',
+        { key },
+        e
+      );
+
       return null;
+
     }
+
   }
 
-  async saveSetting(key: string, value: any): Promise<void> {
-    const startTime = performance.now();
+  async saveSetting(
+    key: string,
+    value: any
+  ): Promise<void> {
+
     const payload = {
+
       key,
+
       value,
-      updated_at: new Date().toISOString()
+
+      updated_at:
+        new Date().toISOString()
+
     };
 
-    try {
-      const client = this.getClient();
-      const { data, error } = await client.from('app_settings').upsert(payload, { onConflict: 'key' }).select();
-      const durationMs = Math.round(performance.now() - startTime);
+    await this.save(
+      'app_settings',
+      payload
+    );
 
-      if (error) {
-        Logger.error('settings', 'UPSERT_SETTING', payload, error, durationMs);
-        throw error;
-      }
-
-      Logger.info('settings', 'UPSERT_SETTING', payload, data, durationMs);
-    } catch (e: any) {
-      const durationMs = Math.round(performance.now() - startTime);
-      Logger.error('settings', 'UPSERT_SETTING_EXCEPTION', payload, e, durationMs);
-    }
   }
 }
