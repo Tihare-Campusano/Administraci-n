@@ -484,46 +484,22 @@ export class SupabaseService {
   //===========================================
 
   async getNotes(): Promise<any[]> {
-
-    const rows =
-      await this.getAll('notes');
+    const rows = await this.getAll('notes');
 
     return rows.map(item => ({
-
-      id:
-        item.id,
-
-      title:
-        item.title,
-
-      content:
-        item.content ?? '',
-
-      items:
-        Array.isArray(item.items)
-          ? item.items
-          : (item.items ?? []),
-
-      category:
-        item.category ?? 'General',
-
-      isPinned:
-        item.is_pinned ?? false,
-
-      color:
-        item.color ?? '#ec4899',
-
-      createdAt:
-        item.created_at,
-
-      updatedAt:
-        item.updated_at,
-
-      deleted:
-        item.deleted ?? false
-
+      id: item.id,
+      title: item.title,
+      content: item.content ?? '',
+      items: Array.isArray(item.checklist)
+        ? item.checklist
+        : (Array.isArray(item.items) ? item.items : []),
+      category: item.category ?? 'General',
+      isPinned: item.is_pinned ?? false,
+      color: item.color ?? '#ec4899',
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+      deleted: item.deleted ?? false
     }));
-
   }
 
   async saveNote(note: any): Promise<void> {
@@ -531,7 +507,7 @@ export class SupabaseService {
       id: note.id,
       title: note.title,
       content: note.content ?? '',
-      items: note.items ?? [],
+      checklist: note.items ?? [],
       category: note.category ?? 'General',
       is_pinned: note.isPinned ?? false,
       color: note.color ?? '#ec4899',
@@ -543,9 +519,8 @@ export class SupabaseService {
     try {
       await this.save('notes', payload);
     } catch (e: any) {
-      // Si la tabla 'notes' en Supabase aún no tiene la columna 'items', reintentar sin 'items'
-      if (e?.message?.includes('items') || e?.details?.includes('items')) {
-        delete payload.items;
+      if (e?.message?.includes('checklist') || e?.details?.includes('checklist')) {
+        delete payload.checklist;
         await this.save('notes', payload).catch(() => {});
       } else {
         throw e;

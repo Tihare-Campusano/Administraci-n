@@ -4,7 +4,66 @@ const DB_VERSION = 4; // Incremented version to add notes store
 let dbInstance: IDBDatabase | null = null;
 let dbPromise: Promise<IDBDatabase> | null = null;
 
+// Fallback de almacenamiento en memoria para ejecución de pruebas en consola Node.js CLI
+class MemoryStore {
+  private items = new Map<string, any>();
+  constructor(public keyPath: string = 'id') {}
+
+  put(item: any) {
+    const key = item[this.keyPath];
+    this.items.set(key, JSON.parse(JSON.stringify(item)));
+    const req = { result: undefined, onsuccess: null as any, onerror: null as any };
+    setTimeout(() => req.onsuccess && req.onsuccess({ target: req } as any), 0);
+    return req;
+  }
+
+  get(key: string) {
+    const val = this.items.get(key);
+    const req = { result: val ? JSON.parse(JSON.stringify(val)) : undefined, onsuccess: null as any, onerror: null as any };
+    setTimeout(() => req.onsuccess && req.onsuccess({ target: req } as any), 0);
+    return req;
+  }
+
+  getAll() {
+    const list = Array.from(this.items.values()).map(v => JSON.parse(JSON.stringify(v)));
+    const req = { result: list, onsuccess: null as any, onerror: null as any };
+    setTimeout(() => req.onsuccess && req.onsuccess({ target: req } as any), 0);
+    return req;
+  }
+
+  delete(key: string) {
+    this.items.delete(key);
+    const req = { result: undefined, onsuccess: null as any, onerror: null as any };
+    setTimeout(() => req.onsuccess && req.onsuccess({ target: req } as any), 0);
+    return req;
+  }
+}
+
+class MemoryDB {
+  private stores = new Map<string, MemoryStore>();
+  objectStoreNames = {
+    contains: (_name: string) => true
+  };
+
+  transaction(name: string) {
+    let store = this.stores.get(name);
+    if (!store) {
+      store = new MemoryStore(name === 'settings' ? 'key' : 'id');
+      this.stores.set(name, store);
+    }
+    return {
+      objectStore: () => store
+    };
+  }
+}
+
 export function openDB(): Promise<IDBDatabase> {
+  if (typeof indexedDB === 'undefined') {
+    if (!dbInstance) {
+      dbInstance = new MemoryDB() as unknown as IDBDatabase;
+    }
+    return Promise.resolve(dbInstance);
+  }
   if (dbInstance) {
     try {
       if (dbInstance.objectStoreNames) {

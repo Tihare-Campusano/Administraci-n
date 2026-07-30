@@ -1,231 +1,1302 @@
-import { SecurityService } from '../services/SecurityService';
-import { ProductService } from '../services/ProductService';
-import { CustomerService } from '../services/CustomerService';
-import { OrderService } from '../services/OrderService';
-import { ExpenseService } from '../services/ExpenseService';
-import { NoteService } from '../services/NoteService';
-import { BackupService } from '../services/BackupService';
+/**********************************************************************
+ * FOODADMIN
+ * Suite de pruebas automatizadas
+ *
+ * Parte 1/5
+ * - Imports
+ * - Helpers
+ * - TestRunner
+ * - Datos de prueba
+ * - Funciones utilitarias
+ *********************************************************************/
 
-async function runFullAppTestSuite() {
-  console.clear();
-  console.log("============================================================");
-  console.log(" 🧪 FOODADMIN - SUITE DE PRUEBAS INTEGRALES DE FUNCIONALIDAD");
-  console.log("============================================================\n");
+import { SecurityService } from "../services/SecurityService";
+import { ProductService } from "../services/ProductService";
+import { CustomerService } from "../services/CustomerService";
+import { OrderService } from "../services/OrderService";
+import { ExpenseService } from "../services/ExpenseService";
+import { NoteService } from "../services/NoteService";
+import { BackupService } from "../services/BackupService";
 
-  const startTime = performance.now();
-  let passedTests = 0;
-  let totalTests = 0;
+/**********************************************************************
+ * COLORES
+ *********************************************************************/
 
-  function assert(condition: boolean, testName: string) {
-    totalTests++;
+const COLORS = {
+  green: "#22c55e",
+  red: "#ef4444",
+  blue: "#3b82f6",
+  yellow: "#f59e0b",
+  gray: "#6b7280",
+  cyan: "#06b6d4",
+  purple: "#9333ea"
+};
+
+function logGreen(text: string) {
+  console.log(`%c${text}`, `color:${COLORS.green};font-weight:bold`);
+}
+
+function logRed(text: string) {
+  console.log(`%c${text}`, `color:${COLORS.red};font-weight:bold`);
+}
+
+function logBlue(text: string) {
+  console.log(`%c${text}`, `color:${COLORS.blue};font-weight:bold`);
+}
+
+function logYellow(text: string) {
+  console.log(`%c${text}`, `color:${COLORS.yellow};font-weight:bold`);
+}
+
+function separator() {
+  console.log(
+    "────────────────────────────────────────────────────────────"
+  );
+}
+
+/**********************************************************************
+ * INTERFACES
+ *********************************************************************/
+
+interface ModuleResult {
+  name: string;
+  passed: number;
+  failed: number;
+  duration: number;
+}
+
+interface AssertOptions {
+  stopModule?: boolean;
+}
+
+/**********************************************************************
+ * TEST RUNNER
+ *********************************************************************/
+
+class TestRunner {
+
+  private totalTests = 0;
+
+  private passedTests = 0;
+
+  private failedTests = 0;
+
+  private moduleResults: ModuleResult[] = [];
+
+  private suiteStart = performance.now();
+
+  /**************************
+   * ASSERT
+   **************************/
+
+  public assert(
+    condition: boolean,
+    message: string,
+    options?: AssertOptions
+  ) {
+
+    this.totalTests++;
+
     if (condition) {
-      passedTests++;
-      console.log(`  ✅ [PASS] ${testName}`);
-    } else {
-      console.error(`  ❌ [FAIL] ${testName}`);
-      throw new Error(`Prueba fallida: ${testName}`);
+
+      this.passedTests++;
+
+      logGreen(`   ✔ ${message}`);
+
+      return;
+    }
+
+    this.failedTests++;
+
+    logRed(`   ✖ ${message}`);
+
+    if (options?.stopModule) {
+      throw new Error(message);
     }
   }
 
-  try {
-    // ------------------------------------------------------------
-    // 1. PRUEBA DE SEGURIDAD (SecurityService)
-    // ------------------------------------------------------------
-    console.log("🔐 1. Probando Módulo de Seguridad...");
-    const securityService = new SecurityService();
-    const testPin = "1234";
-    const hash = await securityService.hashPassword(testPin);
-    assert(typeof hash === 'string' && hash.length > 0, "Generación de hash SHA-256 de contraseña");
-    
-    // Validar contraseña
-    await securityService.setPassword(testPin);
-    const isValid = await securityService.validatePassword(testPin);
-    assert(isValid === true, "Validación de contraseña correcta");
-    
-    const isInvalid = await securityService.validatePassword("0000");
-    assert(isInvalid === false, "Rechazo de contraseña incorrecta");
-    console.log("   --> Módulo de Seguridad OK\n");
+  /**************************
+   * EJECUTAR MÓDULO
+   **************************/
 
-    // ------------------------------------------------------------
-    // 2. PRUEBA DE PRODUCTOS (ProductService)
-    // ------------------------------------------------------------
-    console.log("📦 2. Probando Catálogo de Productos...");
-    const productService = new ProductService();
-    const createdProduct = await productService.saveProduct({
-      id: crypto.randomUUID(),
-      name: "Tarta de Frutillas Test",
-      description: "Deliciosa tarta de prueba automatizada",
-      price: 8500,
-      cost: 4000,
-      category: "Reposteria",
-      available: true
+  public async runModule(
+    name: string,
+    callback: () => Promise<void>
+  ) {
+
+    separator();
+
+    logBlue(`🧪 ${name}`);
+
+    separator();
+
+    const beforePassed = this.passedTests;
+    const beforeFailed = this.failedTests;
+
+    const start = performance.now();
+
+    try {
+
+      await callback();
+
+    } catch (error: any) {
+
+      logRed(`\n❌ Error en módulo ${name}`);
+
+      console.error(error);
+
+    }
+
+    const duration = Math.round(
+      performance.now() - start
+    );
+
+    const passed =
+      this.passedTests - beforePassed;
+
+    const failed =
+      this.failedTests - beforeFailed;
+
+    this.moduleResults.push({
+
+      name,
+
+      passed,
+
+      failed,
+
+      duration
+
     });
 
-    assert(!!createdProduct.id, "Creación de producto con ID generado");
-    assert(createdProduct.name === "Tarta de Frutillas Test", "Nombre del producto guardado");
+    if (failed === 0) {
 
-    const allProducts = await productService.getAllProducts();
-    const foundProd = allProducts.find(p => p.id === createdProduct.id);
-    assert(!!foundProd, "Lectura de producto desde el catálogo");
+      logGreen(`\n✅ ${name} completado`);
 
-    // Actualizar producto
-    createdProduct.price = 9500;
-    await productService.saveProduct(createdProduct);
-    const updatedProd = await productService.getProductById(createdProduct.id);
-    assert(updatedProd?.price === 9500, "Actualización de precio de producto");
+    } else {
 
-    // Soft delete
-    await productService.deleteProduct(createdProduct.id);
-    const productsAfterDelete = await productService.getAllProducts();
-    assert(!productsAfterDelete.some(p => p.id === createdProduct.id), "Borrado lógico (soft delete) de producto");
-    console.log("   --> Módulo de Productos OK\n");
+      logYellow(
+        `\n⚠ ${name} terminó con ${failed} error(es)`
+      );
 
-    // ------------------------------------------------------------
-    // 3. PRUEBA DE CLIENTES (CustomerService)
-    // ------------------------------------------------------------
-    console.log("👤 3. Probando Gestión de Clientes...");
-    const customerService = new CustomerService();
-    const createdCustomer = await customerService.saveCustomer({
-      id: crypto.randomUUID(),
-      name: "María Gonzalez Test",
-      phone: "+56912345678",
-      address: "Av. Siempreviva 742",
-      notes: "Cliente frecuente de tortas"
-    });
+    }
 
-    assert(!!createdCustomer.id, "Registro de cliente con ID");
-    assert(createdCustomer.name === "María Gonzalez Test", "Nombre de cliente guardado correctamente");
-
-    const customerFromDb = await customerService.getCustomerById(createdCustomer.id);
-    assert(customerFromDb?.phone === "+56912345678", "Consulta de cliente por ID");
-
-    await customerService.deleteCustomer(createdCustomer.id);
-    const customersAfterDelete = await customerService.getAllCustomers();
-    assert(!customersAfterDelete.some(c => c.id === createdCustomer.id), "Borrado lógico de cliente");
-    console.log("   --> Módulo de Clientes OK\n");
-
-    // ------------------------------------------------------------
-    // 4. PRUEBA DE PEDIDOS Y VENTAS (OrderService)
-    // ------------------------------------------------------------
-    console.log("🛍️ 4. Probando Pedidos y Ventas...");
-    const orderService = new OrderService();
-    const tempCustomer = await customerService.saveCustomer({
-      id: crypto.randomUUID(),
-      name: "Cliente Pedido Test",
-      phone: "555-0000",
-      address: "Calle Falsa 123",
-      notes: ""
-    });
-
-    const newOrder = await orderService.createOrder({
-      customerId: tempCustomer.id,
-      items: [
-        { productId: "prod_sample_1", name: "Cupcake Vainilla", price: 2000, quantity: 3 }
-      ],
-      discount: 0,
-      deliveryFee: 1500, // Prueba de delivery flexible
-      paymentMethod: "Efectivo",
-      paymentStatus: "unpaid",
-      notes: "Entregar a las 15:00 hrs"
-    });
-
-    assert(!!newOrder.id, "Generación de pedido con ID");
-    assert(newOrder.total === (2000 * 3) + 1500, "Cálculo preciso de total (Subtotal + Delivery)");
-    assert(newOrder.status === 'pending', "Estado inicial de pedido en 'pending'");
-
-    // Actualizar estado a completado (entregado)
-    await orderService.completeOrder(newOrder.id);
-    const completedOrder = await orderService.getOrderById(newOrder.id);
-    assert(completedOrder?.status === 'completed', "Actualización de estado a 'completed'");
-
-    // Cambiar estado de pago
-    await orderService.togglePaymentStatus(newOrder.id);
-    const paidOrder = await orderService.getOrderById(newOrder.id);
-    assert(paidOrder?.paymentStatus === 'paid', "Alternancia de pago a 'paid'");
-
-    // Limpieza de prueba
-    await orderService.deleteOrderRecord(newOrder.id);
-    await customerService.deleteCustomer(tempCustomer.id);
-    console.log("   --> Módulo de Pedidos OK\n");
-
-    // ------------------------------------------------------------
-    // 5. PRUEBA DE GASTOS (ExpenseService)
-    // ------------------------------------------------------------
-    console.log("💸 5. Probando Control de Gastos...");
-    const expenseService = new ExpenseService();
-    const nowStr = new Date().toISOString();
-    const createdExpense = await expenseService.saveExpense({
-      id: crypto.randomUUID(),
-      title: "Compra de Harina y Azúcar Test",
-      amount: 15000,
-      category: "Insumos",
-      date: nowStr,
-      createdAt: nowStr,
-      updatedAt: nowStr
-    });
-
-    assert(!!createdExpense.id, "Registro de gasto operacional");
-    const allExpenses = await expenseService.getAllExpenses();
-    assert(allExpenses.some(e => e.id === createdExpense.id), "Lectura del historial de gastos");
-
-    await expenseService.deleteExpense(createdExpense.id);
-    console.log("   --> Módulo de Gastos OK\n");
-
-    // ------------------------------------------------------------
-    // 6. PRUEBA DE NOTAS Y TAREAS (NoteService)
-    // ------------------------------------------------------------
-    console.log("📝 6. Probando Notas y Listas de Tareas (Notion Style)...");
-    const noteService = new NoteService();
-    const createdNote = await noteService.saveNote({
-      title: "Receta Secreta Kuchen Test",
-      content: "Ingredientes principales y tiempos de horneado",
-      items: [
-        { id: "task_1", text: "Comprar crema de leche", completed: false },
-        { id: "task_2", text: "Precalentar horno a 180C", completed: false }
-      ],
-      category: "Recetas",
-      isPinned: true,
-      color: "#ec4899"
-    });
-
-    assert(!!createdNote.id, "Creación de nota con checklist");
-    assert(createdNote.items.length === 2, "Asignación de items de lista de tareas");
-    assert(createdNote.isPinned === true, "Nota marcada como Pinned");
-
-    // Completar item de lista
-    await noteService.toggleCheckItem(createdNote.id, "task_1");
-    const noteCheck = await noteService.getNoteById(createdNote.id);
-    const task1 = noteCheck?.items.find(i => i.id === "task_1");
-    assert(task1?.completed === true, "Marcado de tarea de checklist como completada");
-
-    await noteService.deleteNote(createdNote.id);
-    console.log("   --> Módulo de Notas OK\n");
-
-    // ------------------------------------------------------------
-    // 7. PRUEBA DE RESPALDO Y RESTAURACIÓN (BackupService)
-    // ------------------------------------------------------------
-    console.log("💾 7. Probando Copia de Seguridad y Respaldo JSON...");
-    const backupService = new BackupService();
-    const exportedJson = await backupService.exportData();
-    assert(typeof exportedJson === 'string' && exportedJson.includes('version'), "Exportación de respaldo JSON con formato válido");
-    
-    const parsedData = JSON.parse(exportedJson);
-    assert(Array.isArray(parsedData.products) && Array.isArray(parsedData.orders), "Estructura de respaldo completa (productos, pedidos, clientes)");
-    console.log("   --> Módulo de Respaldo OK\n");
-
-    // ------------------------------------------------------------
-    // RESUMEN FINAL
-    // ------------------------------------------------------------
-    const duration = Math.round(performance.now() - startTime);
-    console.log("============================================================");
-    console.log(`🎉 TODAS LAS PRUEBAS COMPLETADAS CON ÉXITO (${passedTests}/${totalTests})`);
-    console.log(`⏱️ Tiempo total de ejecución: ${duration} ms`);
-    console.log("============================================================");
-
-  } catch (err: any) {
-    console.error("\n❌ SUITE DE PRUEBAS DETENIDA CON ERROR:");
-    console.error(err.message || err);
+    console.log(
+      `⏱ Tiempo: ${duration} ms\n`
+    );
   }
+
+  /**************************
+   * RESUMEN
+   **************************/
+
+  public finish() {
+
+    separator();
+
+    console.log("");
+
+    logBlue("📊 RESUMEN GENERAL");
+
+    console.log("");
+
+    this.moduleResults.forEach(module => {
+
+      const icon =
+        module.failed === 0
+          ? "✅"
+          : "❌";
+
+      console.log(
+
+        `${icon} ${module.name.padEnd(20, ".")}` +
+        `${module.passed} OK / ${module.failed} FAIL` +
+        `   (${module.duration} ms)`
+
+      );
+
+    });
+
+    console.log("");
+
+    separator();
+
+    const totalTime = Math.round(
+
+      performance.now() - this.suiteStart
+
+    );
+
+    const success =
+      this.totalTests === 0
+        ? 0
+        : (
+          this.passedTests /
+          this.totalTests
+        ) * 100;
+
+    logBlue("RESULTADO FINAL");
+
+    console.log("");
+
+    console.log(`✔ Pruebas exitosas : ${this.passedTests}`);
+
+    console.log(`✖ Pruebas fallidas : ${this.failedTests}`);
+
+    console.log(`📋 Total pruebas   : ${this.totalTests}`);
+
+    console.log(
+      `📈 Éxito           : ${success.toFixed(1)} %`
+    );
+
+    console.log(
+      `⏱ Tiempo total    : ${totalTime} ms`
+    );
+
+    console.log("");
+
+    if (this.failedTests === 0) {
+
+      logGreen(
+        "🎉 TODAS LAS PRUEBAS FINALIZARON CORRECTAMENTE"
+      );
+
+    } else {
+
+      logYellow(
+        `⚠ Existen ${this.failedTests} pruebas fallidas`
+      );
+
+    }
+
+    separator();
+  }
+
 }
 
-runFullAppTestSuite();
+/**********************************************************************
+ * DATOS DE PRUEBA
+ *********************************************************************/
+
+function randomId() {
+
+  return crypto.randomUUID();
+
+}
+
+function nowISO() {
+
+  return new Date().toISOString();
+
+}
+
+function fakeProduct() {
+
+  return {
+
+    id: randomId(),
+
+    name: `Producto Test ${Date.now()}`,
+
+    description: "Producto creado automáticamente",
+
+    price: 8500,
+
+    cost: 4200,
+
+    category: "General",
+
+    available: true
+
+  };
+
+}
+
+function fakeCustomer() {
+
+  return {
+
+    id: randomId(),
+
+    name: `Cliente ${Date.now()}`,
+
+    phone: "+56912345678",
+
+    address: "Dirección Test",
+
+    notes: "Cliente automático"
+
+  };
+
+}
+
+function fakeExpense() {
+
+  return {
+
+    id: randomId(),
+
+    title: "Gasto Automático",
+
+    amount: 12000,
+
+    category: "Test",
+
+    date: nowISO(),
+
+    createdAt: nowISO(),
+
+    updatedAt: nowISO()
+
+  };
+
+}
+
+function fakeNote() {
+
+  return {
+
+    title: "Nota Test",
+
+    content: "Contenido generado automáticamente",
+
+    category: "General",
+
+    color: "#ec4899",
+
+    isPinned: true,
+
+    items: [
+
+      {
+
+        id: "task1",
+
+        text: "Comprar harina",
+
+        completed: false
+
+      },
+
+      {
+
+        id: "task2",
+
+        text: "Comprar azúcar",
+
+        completed: false
+
+      }
+
+    ]
+
+  };
+
+}
+
+/**********************************************************************
+ * PARTE 2/5
+ * - Seguridad
+ * - Productos
+ *********************************************************************/
+
+/**********************************************************************
+ * TEST SECURITY
+ *********************************************************************/
+
+async function testSecurity(runner: TestRunner) {
+
+  const securityService = new SecurityService();
+
+  const pin = "1234";
+
+  const hash = await securityService.hashPassword(pin);
+
+  runner.assert(
+    typeof hash === "string",
+    "Hash generado"
+  );
+
+  runner.assert(
+    hash.length > 20,
+    "Hash posee longitud válida"
+  );
+
+  runner.assert(
+    hash !== pin,
+    "El hash no es igual al PIN"
+  );
+
+  // Guardar contraseña
+
+  await securityService.setPassword(pin);
+
+  const valid = await securityService.validatePassword(pin);
+
+  runner.assert(
+    valid === true,
+    "Contraseña correcta"
+  );
+
+  const invalid = await securityService.validatePassword("0000");
+
+  runner.assert(
+    invalid === false,
+    "Contraseña incorrecta rechazada"
+  );
+
+  // Distintos hashes
+
+  const hash2 = await securityService.hashPassword("5678");
+
+  runner.assert(
+    hash !== hash2,
+    "Cada contraseña genera hash diferente"
+  );
+
+  // Hash consistente
+
+  const hash3 = await securityService.hashPassword(pin);
+
+  runner.assert(
+    hash === hash3,
+    "Hash determinístico"
+  );
+
+  console.log("");
+
+}
+
+/**********************************************************************
+ * TEST PRODUCTOS
+ *********************************************************************/
+
+async function testProducts(runner: TestRunner) {
+
+  const productService = new ProductService();
+
+  const product = fakeProduct();
+
+  /**************************
+   * CREAR
+   **************************/
+
+  const created =
+    await productService.saveProduct(product);
+
+  runner.assert(
+    created.id.length > 0,
+    "Producto creado"
+  );
+
+  runner.assert(
+    created.name === product.name,
+    "Nombre almacenado"
+  );
+
+  runner.assert(
+    created.price === product.price,
+    "Precio almacenado"
+  );
+
+  /**************************
+   * BUSCAR
+   **************************/
+
+  const byId =
+    await productService.getProductById(created.id);
+
+  runner.assert(
+    byId != null,
+    "Buscar por ID"
+  );
+
+  runner.assert(
+    byId?.id === created.id,
+    "ID coincide"
+  );
+
+  /**************************
+   * LISTAR
+   **************************/
+
+  const products =
+    await productService.getAllProducts();
+
+  runner.assert(
+    products.some(p => p.id === created.id),
+    "Producto aparece en listado"
+  );
+
+  /**************************
+   * ACTUALIZAR
+   **************************/
+
+  created.price = 9999;
+
+  created.description =
+    "Producto actualizado automáticamente";
+
+  await productService.saveProduct(created);
+
+  const updated =
+    await productService.getProductById(created.id);
+
+  runner.assert(
+    updated?.price === 9999,
+    "Actualización de precio"
+  );
+
+  runner.assert(
+    updated?.description ===
+    "Producto actualizado automáticamente",
+    "Actualización de descripción"
+  );
+
+  /**************************
+   * VALIDACIONES
+   **************************/
+
+  runner.assert(
+    updated!.cost < updated!.price,
+    "Costo menor que precio"
+  );
+
+  runner.assert(
+    updated!.available === true,
+    "Producto disponible"
+  );
+
+  /**************************
+   * BORRADO
+   **************************/
+
+  await productService.deleteProduct(created.id);
+
+  const afterDelete =
+    await productService.getAllProducts();
+
+  runner.assert(
+
+    !afterDelete.some(
+      p => p.id === created.id
+    ),
+
+    "Soft delete correcto"
+
+  );
+
+  const deleted =
+    await productService.getProductById(created.id);
+
+  runner.assert(
+
+    deleted == null ||
+
+    deleted.available === false ||
+
+    (deleted as any).deleted === true,
+
+    "Producto ya no puede utilizarse"
+
+  );
+
+  /**************************
+   * PRODUCTO INEXISTENTE
+   **************************/
+
+  const fake =
+    await productService.getProductById(
+      crypto.randomUUID()
+    );
+
+  runner.assert(
+
+    fake == null,
+
+    "Consulta inexistente devuelve null"
+
+  );
+
+  console.log("");
+
+}
+
+/**********************************************************************
+ * PARTE 3/5
+ * - Clientes
+ * - Pedidos
+ *********************************************************************/
+
+/**********************************************************************
+ * TEST CLIENTES
+ *********************************************************************/
+
+async function testCustomers(runner: TestRunner) {
+
+  const customerService = new CustomerService();
+
+  const customer = fakeCustomer();
+
+  // CREAR
+
+  const created =
+    await customerService.saveCustomer(customer);
+
+  runner.assert(
+    created.id.length > 0,
+    "Cliente creado"
+  );
+
+  runner.assert(
+    created.name === customer.name,
+    "Nombre correcto"
+  );
+
+  runner.assert(
+    created.phone === customer.phone,
+    "Teléfono correcto"
+  );
+
+  // BUSCAR
+
+  const byId =
+    await customerService.getCustomerById(created.id);
+
+  runner.assert(
+    byId != null,
+    "Buscar cliente por ID"
+  );
+
+  runner.assert(
+    byId?.address === customer.address,
+    "Dirección correcta"
+  );
+
+  // LISTAR
+
+  const customers =
+    await customerService.getAllCustomers();
+
+  runner.assert(
+    customers.some(c => c.id === created.id),
+    "Cliente aparece en listado"
+  );
+
+  // ACTUALIZAR
+
+  created.phone = "+56999999999";
+  created.notes = "Cliente actualizado";
+
+  await customerService.saveCustomer(created);
+
+  const updated =
+    await customerService.getCustomerById(created.id);
+
+  runner.assert(
+    updated?.phone === "+56999999999",
+    "Actualizar teléfono"
+  );
+
+  runner.assert(
+    updated?.notes === "Cliente actualizado",
+    "Actualizar notas"
+  );
+
+  // ELIMINAR
+
+  await customerService.deleteCustomer(created.id);
+
+  const afterDelete =
+    await customerService.getAllCustomers();
+
+  runner.assert(
+    !afterDelete.some(c => c.id === created.id),
+    "Soft delete cliente"
+  );
+
+  // CLIENTE INEXISTENTE
+
+  const fake =
+    await customerService.getCustomerById(
+      crypto.randomUUID()
+    );
+
+  runner.assert(
+    fake == null,
+    "Cliente inexistente devuelve null"
+  );
+
+  console.log("");
+
+}
+
+/**********************************************************************
+ * TEST PEDIDOS
+ *********************************************************************/
+
+async function testOrders(runner: TestRunner) {
+
+  const customerService = new CustomerService();
+  const orderService = new OrderService();
+
+  const customer =
+    await customerService.saveCustomer(
+      fakeCustomer()
+    );
+
+  const subtotal =
+    (2500 * 2) +
+    (3500 * 1);
+
+  const delivery = 1500;
+
+  const total =
+    subtotal + delivery;
+
+  // CREAR PEDIDO
+
+  const order =
+    await orderService.createOrder({
+
+      customerId: customer.id,
+
+      items: [
+
+        {
+          productId: "prod01",
+          name: "Cupcake Chocolate",
+          price: 2500,
+          quantity: 2
+        },
+
+        {
+          productId: "prod02",
+          name: "Cheesecake",
+          price: 3500,
+          quantity: 1
+        }
+
+      ],
+
+      discount: 0,
+
+      deliveryFee: delivery,
+
+      paymentMethod: "Efectivo",
+
+      paymentStatus: "unpaid",
+
+      notes: "Pedido automático"
+
+    });
+
+  runner.assert(
+    order.id.length > 0,
+    "Pedido creado"
+  );
+
+  runner.assert(
+    order.customerId === customer.id,
+    "Cliente asociado"
+  );
+
+  runner.assert(
+    order.products.length === 2,
+    "Cantidad de productos"
+  );
+
+  runner.assert(
+    order.total === total,
+    "Cálculo del total"
+  );
+
+  runner.assert(
+    order.status === "pending",
+    "Estado inicial pendiente"
+  );
+
+  runner.assert(
+    order.paymentStatus === "unpaid",
+    "Pago inicial pendiente"
+  );
+
+  // BUSCAR
+
+  const byId =
+    await orderService.getOrderById(order.id);
+
+  runner.assert(
+    byId != null,
+    "Buscar pedido"
+  );
+
+  // COMPLETAR
+
+  await orderService.completeOrder(order.id);
+
+  const completed =
+    await orderService.getOrderById(order.id);
+
+  runner.assert(
+    completed?.status === "completed",
+    "Pedido completado"
+  );
+
+  // PAGAR
+
+  await orderService.togglePaymentStatus(order.id);
+
+  const paid =
+    await orderService.getOrderById(order.id);
+
+  runner.assert(
+    paid?.paymentStatus === "paid",
+    "Pago actualizado"
+  );
+
+  // VOLVER A PENDIENTE
+
+  await orderService.togglePaymentStatus(order.id);
+
+  const unpaid =
+    await orderService.getOrderById(order.id);
+
+  runner.assert(
+    unpaid?.paymentStatus === "unpaid",
+    "Pago vuelve a pendiente"
+  );
+
+  // LISTADO
+
+  const orders =
+    await orderService.getAllOrders();
+
+  runner.assert(
+    orders.some(o => o.id === order.id),
+    "Pedido aparece en listado"
+  );
+
+  // ELIMINAR
+
+  await orderService.deleteOrderRecord(order.id);
+
+  const afterDelete =
+    await orderService.getAllOrders();
+
+  runner.assert(
+    !afterDelete.some(o => o.id === order.id),
+    "Eliminar pedido"
+  );
+
+  // LIMPIEZA
+
+  await customerService.deleteCustomer(customer.id);
+
+  console.log("");
+
+}
+
+/**********************************************************************
+ * PARTE 4/5
+ * - Gastos
+ * - Notas
+ * - Backup
+ *********************************************************************/
+
+/**********************************************************************
+ * TEST GASTOS
+ *********************************************************************/
+
+async function testExpenses(runner: TestRunner) {
+
+  const expenseService = new ExpenseService();
+
+  const expense = fakeExpense();
+
+  // CREAR
+
+  const created =
+    await expenseService.saveExpense(expense);
+
+  runner.assert(
+    !!created.id,
+    "Gasto creado"
+  );
+
+  runner.assert(
+    created.amount === expense.amount,
+    "Monto correcto"
+  );
+
+  runner.assert(
+    created.category === expense.category,
+    "Categoría correcta"
+  );
+
+  // LISTAR
+
+  const expenses =
+    await expenseService.getAllExpenses();
+
+  runner.assert(
+    expenses.some(e => e.id === created.id),
+    "Gasto aparece en listado"
+  );
+
+  // ACTUALIZAR
+
+  created.amount = 18000;
+  created.title = "Compra Insumos Actualizada";
+
+  await expenseService.saveExpense(created);
+
+  const updated =
+    (await expenseService.getAllExpenses())
+      .find(e => e.id === created.id);
+
+  runner.assert(
+    updated?.amount === 18000,
+    "Actualizar monto"
+  );
+
+  runner.assert(
+    updated?.title === "Compra Insumos Actualizada",
+    "Actualizar título"
+  );
+
+  // ELIMINAR
+
+  await expenseService.deleteExpense(created.id);
+
+  const afterDelete =
+    await expenseService.getAllExpenses();
+
+  runner.assert(
+    !afterDelete.some(e => e.id === created.id),
+    "Eliminar gasto"
+  );
+
+  console.log("");
+
+}
+
+/**********************************************************************
+ * TEST NOTAS
+ *********************************************************************/
+
+async function testNotes(runner: TestRunner) {
+
+  const noteService = new NoteService();
+
+  const note = fakeNote();
+
+  // CREAR
+
+  const created =
+    await noteService.saveNote(note);
+
+  runner.assert(
+    !!created.id,
+    "Nota creada"
+  );
+
+  runner.assert(
+    created.items.length === 2,
+    "Checklist creado"
+  );
+
+  runner.assert(
+    created.isPinned === true,
+    "Nota fijada"
+  );
+
+  // OBTENER
+
+  const saved =
+    await noteService.getNoteById(created.id);
+
+  runner.assert(
+    saved != null,
+    "Buscar nota"
+  );
+
+  // COMPLETAR ITEM
+
+  await noteService.toggleCheckItem(
+    created.id,
+    "task1"
+  );
+
+  const checked =
+    await noteService.getNoteById(created.id);
+
+  const task =
+    checked?.items.find(
+      i => i.id === "task1"
+    );
+
+  runner.assert(
+    task?.completed === true,
+    "Completar tarea"
+  );
+
+  // DESMARCAR
+
+  await noteService.toggleCheckItem(
+    created.id,
+    "task1"
+  );
+
+  const unchecked =
+    await noteService.getNoteById(created.id);
+
+  const task2 =
+    unchecked?.items.find(
+      i => i.id === "task1"
+    );
+
+  runner.assert(
+    task2?.completed === false,
+    "Desmarcar tarea"
+  );
+
+  // ELIMINAR
+
+  await noteService.deleteNote(created.id);
+
+  const deleted =
+    await noteService.getNoteById(created.id);
+
+  runner.assert(
+    deleted == null,
+    "Eliminar nota"
+  );
+
+  console.log("");
+
+}
+
+/**********************************************************************
+ * TEST BACKUP
+ *********************************************************************/
+
+async function testBackup(runner: TestRunner) {
+
+  const backupService =
+    new BackupService();
+
+  const json =
+    await backupService.exportData();
+
+  runner.assert(
+    typeof json === "string",
+    "Exportar JSON"
+  );
+
+  runner.assert(
+    json.length > 20,
+    "JSON no vacío"
+  );
+
+  const parsed =
+    JSON.parse(json);
+
+  runner.assert(
+    typeof parsed.version === "number" || typeof parsed.version === "string",
+    "Versión incluida"
+  );
+
+  runner.assert(
+    Array.isArray(parsed.products),
+    "Productos presentes"
+  );
+
+  runner.assert(
+    Array.isArray(parsed.customers),
+    "Clientes presentes"
+  );
+
+  runner.assert(
+    Array.isArray(parsed.orders),
+    "Pedidos presentes"
+  );
+
+  runner.assert(
+    Array.isArray(parsed.expenses),
+    "Gastos presentes"
+  );
+
+  // IMPORTAR
+
+  try {
+
+    await backupService.importData(json);
+
+    runner.assert(
+      true,
+      "Importación correcta"
+    );
+
+  } catch {
+
+    runner.assert(
+      false,
+      "Importación correcta"
+    );
+
+  }
+
+  // JSON INVÁLIDO
+
+  try {
+
+    await backupService.importData(
+      "{json_invalido}"
+    );
+
+    runner.assert(
+      false,
+      "JSON inválido rechazado"
+    );
+
+  } catch {
+
+    runner.assert(
+      true,
+      "JSON inválido detectado"
+    );
+
+  }
+
+  console.log("");
+
+}
+
+/**********************************************************************
+ * PARTE 5/5
+ * MAIN
+ *
+ * ✔ runFullAppTestSuite()
+ * ✔ Banner profesional
+ * ✔ Ejecución de módulos
+ * ✔ Resumen final
+ * ✔ Estadísticas
+ * ✔ Tiempo total
+ *********************************************************************/
+
+async function runFullAppTestSuite(): Promise<void> {
+
+  console.clear();
+
+  console.log("");
+  console.log("╔════════════════════════════════════════════════════════════════════╗");
+  console.log("║                                                                    ║");
+  console.log("║              🍰 FOODADMIN AUTOMATED TEST SUITE                     ║");
+  console.log("║                                                                    ║");
+  console.log("║        Validación completa de todos los módulos del sistema         ║");
+  console.log("║                                                                    ║");
+  console.log("╚════════════════════════════════════════════════════════════════════╝");
+  console.log("");
+
+  console.log("🚀 Iniciando pruebas...\n");
+
+  const suiteStart = performance.now();
+
+  const runner = new TestRunner();
+
+  await runner.runModule(
+    "🔐 Módulo de Seguridad",
+    () => testSecurity(runner)
+  );
+
+  await runner.runModule(
+    "📦 Módulo de Productos",
+    () => testProducts(runner)
+  );
+
+  await runner.runModule(
+    "👤 Módulo de Clientes",
+    () => testCustomers(runner)
+  );
+
+  await runner.runModule(
+    "🛍️ Módulo de Pedidos",
+    () => testOrders(runner)
+  );
+
+  await runner.runModule(
+    "💸 Módulo de Gastos",
+    () => testExpenses(runner)
+  );
+
+  await runner.runModule(
+    "📝 Módulo de Notas",
+    () => testNotes(runner)
+  );
+
+  await runner.runModule(
+    "💾 Módulo de Backup",
+    () => testBackup(runner)
+  );
+
+  console.log("");
+
+  console.log("════════════════════════════════════════════════════════════════════");
+  console.log("                    🏁 EJECUCIÓN FINALIZADA");
+  console.log("════════════════════════════════════════════════════════════════════");
+  console.log("");
+
+  runner.finish();
+
+  const totalTime = Math.round(
+    performance.now() - suiteStart
+  );
+
+  console.log("");
+
+  console.log("════════════════════════════════════════════════════════════════════");
+  console.log("                    INFORMACIÓN GENERAL");
+  console.log("════════════════════════════════════════════════════════════════════");
+
+  console.log("");
+
+  console.log(
+    `📅 Fecha : ${new Date().toLocaleDateString()}`
+  );
+
+  console.log(
+    `🕒 Hora  : ${new Date().toLocaleTimeString()}`
+  );
+
+  console.log(
+    `⚡ Tiempo Total : ${totalTime} ms`
+  );
+
+  console.log("");
+
+  console.log("════════════════════════════════════════════════════════════════════");
+  console.log("              FOODADMIN TEST SUITE FINALIZADA");
+  console.log("════════════════════════════════════════════════════════════════════");
+  console.log("");
+
+}
+
+runFullAppTestSuite()
+  .then(() => {
+
+    console.log("✅ Suite ejecutada correctamente.");
+
+  })
+  .catch(error => {
+
+    console.error("");
+    console.error("❌ ERROR GENERAL DE LA SUITE");
+    console.error(error);
+    console.error("");
+
+  });
+
+export {
+  runFullAppTestSuite
+};

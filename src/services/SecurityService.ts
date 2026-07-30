@@ -34,11 +34,12 @@ export class SecurityService {
   }
 
   async hashPassword(password: string): Promise<string> {
-    if (window.crypto && crypto.subtle) {
+    const cryptoObj = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined;
+    if (cryptoObj && cryptoObj.subtle) {
       try {
         const encoder = new TextEncoder();
         const data = encoder.encode(password + "salt_foodadmin_2026");
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashBuffer = await cryptoObj.subtle.digest('SHA-256', data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       } catch (err) {
