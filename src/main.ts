@@ -11,7 +11,7 @@ import { CustomerRepository } from './repositories/CustomerRepository';
 import { NoteRepository } from './repositories/NoteRepository';
 import { OrderRepository } from './repositories/OrderRepository';
 import { showToast } from './components/Toast';
-import { PinLogin } from './components/PinLogin';
+import { AuthLogin } from './components/AuthLogin';
 import { SecurityService } from './services/SecurityService';
 
 // Global Instances
@@ -23,7 +23,7 @@ const clientsPage = new ClientsPage();
 const notesPage = new NotesPage();
 const backupPage = new BackupPage();
 const orderModal = new OrderModal();
-const pinLogin = new PinLogin();
+const authLogin = new AuthLogin();
 const securityService = new SecurityService();
 
 const orderRepository = new OrderRepository();
@@ -139,27 +139,28 @@ async function init() {
     });
 
     orderModal.init(() => loadTabData(currentTab));
-    pinLogin.init(() => {
+    authLogin.init(() => {
       backupPage.updateSecurityStatusUI();
     });
     
-    backupPage.init(() => loadTabData(currentTab), pinLogin);
+    backupPage.init(() => loadTabData(currentTab), authLogin);
     
     // Enlazar botón de bloqueo manual del sidebar
     document.getElementById('btn-lock-app')?.addEventListener('click', () => {
       securityService.lockSession();
-      pinLogin.show('lock');
+      authLogin.show('lock');
     });
 
-    // Validar seguridad al iniciar: Si existe un PIN o la seguridad está activa, solicitar PIN de 4 dígitos.
-    // De lo contrario, invitar al usuario a crear su PIN por primera vez.
+    // Validar seguridad al iniciar:
+    // Si existe una contraseña configurada y la seguridad está activa, solicitar contraseña.
+    // De lo contrario (ej: primera vez que se abre la app), solicitar crear contraseña.
     const isSecurityActive = await securityService.isSecurityEnabled();
-    const hasPin = await securityService.hasPinSet();
+    const hasPassword = await securityService.hasPasswordSet();
 
-    if (isSecurityActive || hasPin) {
-      pinLogin.show('lock');
-    } else {
-      pinLogin.show('setup');
+    if (hasPassword && isSecurityActive) {
+      authLogin.show('lock');
+    } else if (!hasPassword) {
+      authLogin.show('setup');
     }
 
     setupTabNavigation();

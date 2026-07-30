@@ -1,24 +1,24 @@
 import { BackupService } from '../services/BackupService';
 import { SecurityService } from '../services/SecurityService';
-import { PinLogin } from '../components/PinLogin';
+import { AuthLogin } from '../components/AuthLogin';
 import { showToast } from '../components/Toast';
 
 export class BackupPage {
   private backupService = new BackupService();
   private securityService = new SecurityService();
-  private pinLogin!: PinLogin;
+  private authLogin!: AuthLogin;
   private onReloadNeeded: () => void = () => {};
 
-  init(onReloadNeeded: () => void, pinLogin: PinLogin): void {
+  init(onReloadNeeded: () => void, authLogin: AuthLogin): void {
     this.onReloadNeeded = onReloadNeeded;
-    this.pinLogin = pinLogin;
+    this.authLogin = authLogin;
     
     document.getElementById('btn-export-db')?.addEventListener('click', () => this.handleExport());
     document.getElementById('btn-import-db')?.addEventListener('click', () => this.triggerFileSelector());
     document.getElementById('import-file-input')?.addEventListener('change', (e) => this.handleImport(e));
     document.getElementById('btn-reset-db')?.addEventListener('click', () => this.handleReset());
 
-    // Seguridad con PIN
+    // Seguridad con Contraseña
     document.getElementById('btn-security-toggle')?.addEventListener('click', () => this.handleSecurityToggle());
     document.getElementById('btn-security-change')?.addEventListener('click', () => this.handleSecurityChange());
 
@@ -26,20 +26,23 @@ export class BackupPage {
   }
 
   async updateSecurityStatusUI(): Promise<void> {
+    const hasPassword = await this.securityService.hasPasswordSet();
     const isEnabled = await this.securityService.isSecurityEnabled();
+    const isProtected = hasPassword && isEnabled;
+
     const statusText = document.getElementById('security-status-text');
     const toggleBtn = document.getElementById('btn-security-toggle');
     const changeBtn = document.getElementById('btn-security-change');
 
     if (statusText) {
-      statusText.innerHTML = isEnabled 
-        ? 'El bloqueo de pantalla por PIN está <strong style="color:var(--success);">activo</strong>. Se solicitará el código al abrir la aplicación.' 
-        : 'El bloqueo de pantalla por PIN está <strong style="color:var(--text-secondary);">desactivado</strong> actualmente.';
+      statusText.innerHTML = isProtected 
+        ? 'El bloqueo de pantalla por Contraseña está <strong style="color:var(--success);">activo</strong>. Se solicitará la contraseña al abrir la aplicación.' 
+        : 'El bloqueo de pantalla por Contraseña está <strong style="color:var(--text-secondary);">desactivado</strong> actualmente.';
     }
 
     if (toggleBtn) {
-      toggleBtn.textContent = isEnabled ? 'Desactivar PIN de Bloqueo' : 'Activar PIN de Bloqueo';
-      if (isEnabled) {
+      toggleBtn.textContent = isProtected ? 'Desactivar Contraseña' : 'Activar Contraseña';
+      if (isProtected) {
         toggleBtn.classList.remove('btn-primary');
         toggleBtn.classList.add('btn-danger');
       } else {
@@ -49,21 +52,23 @@ export class BackupPage {
     }
 
     if (changeBtn) {
-      changeBtn.style.display = isEnabled ? 'inline-block' : 'none';
+      changeBtn.style.display = isProtected ? 'inline-block' : 'none';
+      changeBtn.textContent = 'Cambiar Contraseña';
     }
   }
 
   private async handleSecurityToggle(): Promise<void> {
+    const hasPassword = await this.securityService.hasPasswordSet();
     const isEnabled = await this.securityService.isSecurityEnabled();
-    if (isEnabled) {
-      this.pinLogin.show('disable');
+    if (hasPassword && isEnabled) {
+      this.authLogin.show('disable');
     } else {
-      this.pinLogin.show('setup');
+      this.authLogin.show('setup');
     }
   }
 
   private handleSecurityChange(): void {
-    this.pinLogin.show('change');
+    this.authLogin.show('change');
   }
 
   private async handleExport(): Promise<void> {

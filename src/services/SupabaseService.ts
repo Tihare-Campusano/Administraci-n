@@ -355,4 +355,50 @@ export class SupabaseService {
       Logger.error('notes', 'UPSERT_EXCEPTION', payload, e, durationMs);
     }
   }
+
+  // --- APP SETTINGS / SECURITY ---
+  async getSetting(key: string): Promise<any | null> {
+    const startTime = performance.now();
+    try {
+      const client = this.getClient();
+      const { data, error } = await client.from('app_settings').select('value').eq('key', key).single();
+      const durationMs = Math.round(performance.now() - startTime);
+
+      if (error) {
+        if (error.code !== 'PGRST116') {
+          Logger.warn('settings', 'SELECT_SETTING', { key }, error, durationMs);
+        }
+        return null;
+      }
+
+      return data ? data.value : null;
+    } catch (e: any) {
+      return null;
+    }
+  }
+
+  async saveSetting(key: string, value: any): Promise<void> {
+    const startTime = performance.now();
+    const payload = {
+      key,
+      value,
+      updated_at: new Date().toISOString()
+    };
+
+    try {
+      const client = this.getClient();
+      const { data, error } = await client.from('app_settings').upsert(payload, { onConflict: 'key' }).select();
+      const durationMs = Math.round(performance.now() - startTime);
+
+      if (error) {
+        Logger.error('settings', 'UPSERT_SETTING', payload, error, durationMs);
+        throw error;
+      }
+
+      Logger.info('settings', 'UPSERT_SETTING', payload, data, durationMs);
+    } catch (e: any) {
+      const durationMs = Math.round(performance.now() - startTime);
+      Logger.error('settings', 'UPSERT_SETTING_EXCEPTION', payload, e, durationMs);
+    }
+  }
 }

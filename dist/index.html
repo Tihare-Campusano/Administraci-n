@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Aplicación de administración de ventas de comida, finanzas, pedidos activos e historial.">
   <title>FoodAdmin | Control de Ventas de Comida</title>
-  <script type="module" crossorigin src="./assets/index-GHdKfk6a.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-Dih3t3Xn.css">
+  <script type="module" crossorigin src="./assets/index-DQM4ISdm.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-gbCkhMjy.css">
 </head>
 <body>
 
@@ -346,11 +346,11 @@
 
         <!-- Security Card -->
         <div class="glass-card" id="security-settings-card">
-          <h2 class="card-title" style="margin-bottom: 10px;">Seguridad con PIN</h2>
+          <h2 class="card-title" style="margin-bottom: 10px;">Seguridad y Contraseña</h2>
           <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;" id="security-status-text">Cargando estado de seguridad...</p>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="btn btn-primary" id="btn-security-toggle">Cargando...</button>
-            <button class="btn btn-secondary" id="btn-security-change" style="display: none;">Cambiar PIN</button>
+            <button class="btn btn-secondary" id="btn-security-change" style="display: none;">Cambiar Contraseña</button>
           </div>
         </div>
 
@@ -733,39 +733,58 @@
     </div>
   </div>
 
-  <!-- E. PIN LOGIN OVERLAY -->
-  <div id="pin-login-overlay" class="pin-overlay">
-    <div class="glass-card pin-card">
-      <div class="pin-header" style="display: flex; flex-direction: column; align-items: center;">
-        <div class="pin-logo" style="filter: none; animation: none; margin-bottom: 0.5rem; width: 80px; height: 80px;">
+  <!-- E. AUTH LOGIN OVERLAY -->
+  <div id="auth-login-overlay" class="auth-overlay">
+    <div class="glass-card auth-card">
+      <div class="auth-header" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1.25rem;">
+        <div class="auth-logo" style="margin-bottom: 0.75rem; width: 80px; height: 80px;">
           <img src="./assets/gato_chef-mqRExj2S.jpg" alt="Michi Chef Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--accent); box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);">
         </div>
-        <h2 class="pin-title" id="pin-title">Ingresa tu PIN de Seguridad</h2>
+        <h2 class="auth-title" id="auth-title" style="margin: 0; font-size: 1.3rem; font-weight: 700; text-align: center;">Iniciar Sesión en FoodAdmin</h2>
+        <p class="auth-subtitle" id="auth-subtitle" style="margin: 0.4rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary); text-align: center; line-height: 1.3;">Ingresa tu contraseña para acceder a la aplicación.</p>
       </div>
-      <div class="pin-dots-container" id="pin-dots">
-        <div class="pin-dot"></div>
-        <div class="pin-dot"></div>
-        <div class="pin-dot"></div>
-        <div class="pin-dot"></div>
-      </div>
-      <div class="pin-error-msg" id="pin-error-msg">PIN incorrecto. Inténtalo de nuevo.</div>
-      
-      <div class="pin-keyboard">
-        <button class="pin-key" data-val="1">1</button>
-        <button class="pin-key" data-val="2">2</button>
-        <button class="pin-key" data-val="3">3</button>
-        <button class="pin-key" data-val="4">4</button>
-        <button class="pin-key" data-val="5">5</button>
-        <button class="pin-key" data-val="6">6</button>
-        <button class="pin-key" data-val="7">7</button>
-        <button class="pin-key" data-val="8">8</button>
-        <button class="pin-key" data-val="9">9</button>
-        <button class="pin-key pin-key-text" id="pin-cancel-btn">Cancelar</button>
-        <button class="pin-key" data-val="0">0</button>
-        <button class="pin-key pin-key-icon" id="pin-delete-btn" title="Borrar">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
-        </button>
-      </div>
+
+      <form id="auth-login-form" class="auth-form" style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Current Password (change mode) -->
+        <div class="form-group" id="group-current-password" style="display: none; flex-direction: column; gap: 4px;">
+          <label for="auth-current-password-input" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Contraseña Actual</label>
+          <div class="password-input-wrapper">
+            <input type="password" id="auth-current-password-input" class="form-control auth-input" placeholder="Tu contraseña actual" autocomplete="current-password">
+            <button type="button" class="btn-toggle-password" data-target="auth-current-password-input" title="Mostrar contraseña" tabIndex="-1">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Password -->
+        <div class="form-group" id="group-main-password" style="display: flex; flex-direction: column; gap: 4px;">
+          <label for="auth-password-input" id="auth-password-label" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Contraseña</label>
+          <div class="password-input-wrapper">
+            <input type="password" id="auth-password-input" class="form-control auth-input" placeholder="Ingresa tu contraseña" autocomplete="current-password">
+            <button type="button" class="btn-toggle-password" data-target="auth-password-input" title="Mostrar contraseña" tabIndex="-1">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirm Password (setup/change mode) -->
+        <div class="form-group" id="group-confirm-password" style="display: none; flex-direction: column; gap: 4px;">
+          <label for="auth-confirm-password-input" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Confirmar Contraseña</label>
+          <div class="password-input-wrapper">
+            <input type="password" id="auth-confirm-password-input" class="form-control auth-input" placeholder="Repite tu contraseña" autocomplete="new-password">
+            <button type="button" class="btn-toggle-password" data-target="auth-confirm-password-input" title="Mostrar contraseña" tabIndex="-1">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-error-msg" id="auth-error-msg"></div>
+
+        <div class="auth-actions" style="display: flex; gap: 10px; margin-top: 0.5rem;">
+          <button type="button" class="btn btn-secondary" id="auth-cancel-btn" style="flex: 1; display: none;">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="auth-submit-btn" style="flex: 2; width: 100%;">Ingresar</button>
+        </div>
+      </form>
     </div>
   </div>
 

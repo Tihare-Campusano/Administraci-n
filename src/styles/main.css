@@ -1143,9 +1143,9 @@ textarea.form-input:focus {
   }
 }
 
-/* ==================== PIN SECURITY STYLES ==================== */
+/* ==================== AUTH SECURITY STYLES ==================== */
 
-.pin-overlay {
+.auth-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -1163,186 +1163,89 @@ textarea.form-input:focus {
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.pin-overlay.active {
+.auth-overlay.active {
   display: flex;
   opacity: 1;
   pointer-events: auto;
 }
 
-.pin-card {
-  width: 360px;
-  padding: 2.5rem 2rem;
+.auth-card {
+  width: 380px;
+  max-width: 90vw;
+  padding: 2.25rem 2rem;
   border-radius: 24px;
-  background: rgba(19, 27, 46, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  background: rgba(19, 27, 46, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(236, 72, 153, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
   position: relative;
 }
 
-.pin-header {
-  margin-bottom: 0.5rem;
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
 
-.pin-logo {
-  font-size: 2.8rem;
-  margin-bottom: 0.75rem;
-  filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.25));
-  animation: float 3s ease-in-out infinite;
+.auth-input {
+  width: 100%;
+  padding-right: 42px !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: var(--text-primary) !important;
+  font-size: 0.95rem !important;
+  height: 44px !important;
+  transition: all 0.2s ease !important;
 }
 
-.pin-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.3px;
-  min-height: 48px;
+.auth-input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.3) !important;
+  outline: none !important;
+}
+
+.btn-toggle-password {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 6px;
+  transition: color 0.2s ease;
 }
 
-.pin-dots-container {
-  display: flex;
-  gap: 1.25rem;
-  justify-content: center;
-  margin: 1rem 0 0.5rem 0;
-  width: 100%;
+.btn-toggle-password:hover {
+  color: var(--accent);
 }
 
-.pin-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid var(--text-muted);
-  background: transparent;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.pin-dot.filled {
-  background-color: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 12px var(--accent);
-  transform: scale(1.15);
-}
-
-.pin-error-msg {
+.auth-error-msg {
   font-size: 0.85rem;
   color: var(--danger);
   font-weight: 500;
-  opacity: 0;
-  height: 20px;
-  margin-bottom: 0.75rem;
-  transition: opacity 0.2s ease;
+  display: none;
+  text-align: center;
   width: 100%;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 4px;
 }
 
-.pin-error-msg.visible {
-  opacity: 1;
+.auth-error-msg.visible {
+  display: block;
 }
 
-.pin-keyboard {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  width: 100%;
-  max-width: 256px;
-  justify-items: center;
-}
-
-.pin-key {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  border: 1px solid var(--border-glass);
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text-primary);
-  font-size: 1.6rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  user-select: none;
-  font-family: var(--font-family);
-}
-
-.pin-key:hover {
-  background-color: rgba(255, 255, 255, 0.07);
-  border-color: var(--border-glass-hover);
-  transform: scale(1.06);
-}
-
-.pin-key:active {
-  background-color: var(--accent);
-  border-color: var(--accent);
-  color: white;
-  transform: scale(0.94);
-  box-shadow: 0 0 20px rgba(236, 72, 153, 0.45);
-}
-
-.pin-key-text {
-  font-size: 0.85rem;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.pin-key-text:hover {
-  color: var(--text-primary);
-  background: transparent;
-  transform: scale(1.05);
-}
-
-.pin-key-text:active {
-  color: var(--accent);
-  background: transparent;
-  transform: scale(0.95);
-  box-shadow: none;
-}
-
-.pin-key-icon {
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-}
-
-.pin-key-icon:hover {
-  color: var(--text-primary);
-  background: transparent;
-  transform: scale(1.1);
-}
-
-.pin-key-icon:active {
-  color: var(--accent);
-  background: transparent;
-  transform: scale(0.9);
-  box-shadow: none;
-}
-
-.btn-icon-lock:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  color: var(--accent) !important;
-  box-shadow: 0 0 10px rgba(236, 72, 153, 0.1);
-}
-
-.btn-icon-lock:active {
-  transform: scale(0.9);
-}
-
-/* Animations */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-8px); }
-  40%, 80% { transform: translateX(8px); }
-}
-
-.pin-dots-container.shake {
+.auth-card.shake {
   animation: shake 0.4s ease-in-out;
 }
 
