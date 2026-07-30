@@ -46,6 +46,21 @@
 - **Recordatorios / Fechas Límite**:
   - Opción de asignar fecha de vencimiento (`reminderAt`) a notas o ítems de listas de compras.
 
+### F. Módulo de Inteligencia Artificial (FoodAdmin AI Copilot)
+- **Asistente de Costos, Márgenes y Precios Sugeridos**:
+  - Analizar el costo de insumos/ingredientes de cada producto y sugerir automáticamente precios de venta idóneos para garantizar la rentabilidad deseada.
+  - Redacción automática de descripciones atractivas y comerciales para los productos del catálogo.
+- **Predicción de Demanda y Recomendador de Compras (Smart Forecast)**:
+  - Analizar el historial de ventas para predecir la demanda estimada de la semana (ej. fin de semana o fechas especiales como Día de la Madre) y generar automáticamente listas de insumos a comprar en *Notas y Tareas*.
+- **Generador de Mensajes para WhatsApp y Fidelización**:
+  - Crear mensajes personalizados según el perfil del cliente con 1 solo clic (promociones para clientes inactivos, ofertas especiales o recordatorios amables de saldo adeudado).
+- **Escaneo Inteligente de Comprobantes de Gastos (OCR con IA)**:
+  - Cargar foto/imagen de un recibo o factura de compra para que la IA extraiga automáticamente el monto, la fecha, la categoría y la descripción, registrándolo en el módulo de *Finanzas*.
+- **Consultas en Lenguaje Natural (FoodAdmin Copilot)**:
+  - Barra de búsqueda e interacción inteligente donde el usuario puede hacer preguntas como: * "¿Cuál fue mi ganancia neta este mes?"* o * "¿Qué cliente suele comprar más los fines de semana?"*.
+- **Arquitectura de IA Híbrida (Offline & Cloud)**:
+  - Integración mediante API Key opcional (Gemini, OpenAI, DeepSeek) o ejecución local (Ollama/WebLLM). Si no hay conexión o no hay API Key configurada, la aplicación sigue funcionando al 100% de manera offline sin bloquearse. (Crear un modelo e integrarlo)
+
 ---
 
 ## 3. Mejoras de Arquitectura y Rendimiento (Offline-First)
@@ -75,9 +90,13 @@
 | 2 | Enlace directo a WhatsApp en directorio de clientes (`wa.me`) | Baja | Alto | 🚀 Alta |
 | 3 | Atajos de Teclado Globales (`Ctrl+N`, `Ctrl+K`, `Ctrl+L`) | Baja | Medio | 🟢 Media |
 | 4 | Control de Stock / Inventario Mínimo en Productos | Media | Alto | 🚀 Alta |
-| 5 | Gráfico Comparativo Mensual en Dashboard (Chart.js) | Media | Medio | 🟢 Media |
-| 6 | Índices secundarios en IndexedDB (`db.ts`) | Baja | Alto (Largo Plazo) | 🟢 Media |
-| 7 | Copia de seguridad automática diaria en JSON | Baja | Medio | 🟡 Deseable |
+| 5 | Asistente de Redacción para WhatsApp y Mensajes de Fidelización | Media | Alto | 🚀 Alta |
+| 6 | Asistente de Costos y Sugerencia de Precios / Descripciones | Media | Medio | 🟢 Media |
+| 7 | Predicción de Demanda y Auto-lista de Compras en Notas | Alta | Alto | 🟢 Media |
+| 8 | Escaneo de Facturas/Recibos de Gastos (OCR con IA) | Alta | Alto | 🟢 Media |
+| 9 | Gráfico Comparativo Mensual en Dashboard (Chart.js) | Media | Medio | 🟢 Media |
+| 10 | Índices secundarios en IndexedDB (`db.ts`) | Baja | Alto (Largo Plazo) | 🟢 Media |
+| 11 | Copia de seguridad automática diaria en JSON | Baja | Medio | 🟡 Deseable |
 
 ---
 
