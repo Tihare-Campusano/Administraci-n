@@ -627,4 +627,70 @@ export class SupabaseService {
       await client.from('app_settings').delete().eq('key', key);
     } catch (e) {}
   }
+
+  //===========================================
+  // INGREDIENTS
+  //===========================================
+
+  async getIngredients(): Promise<any[]> {
+    const rows = await this.getAll('ingredients');
+
+    return rows.map(item => ({
+      id: item.id,
+      name: item.name,
+      unit: item.unit ?? 'g',
+      currentStock: Number(item.current_stock) || 0,
+      minStock: Number(item.min_stock) || 0,
+      costPerUnit: Number(item.cost_per_unit) || 0,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+      deleted: item.deleted ?? false
+    }));
+  }
+
+  async saveIngredient(ingredient: any): Promise<void> {
+    await this.save('ingredients', {
+      id: ingredient.id,
+      name: ingredient.name,
+      unit: ingredient.unit ?? 'g',
+      current_stock: Number(ingredient.currentStock) || 0,
+      min_stock: Number(ingredient.minStock) || 0,
+      cost_per_unit: Number(ingredient.costPerUnit) || 0,
+      created_at: ingredient.createdAt,
+      updated_at: ingredient.updatedAt,
+      deleted: ingredient.deleted ?? false
+    });
+  }
+
+  //===========================================
+  // NOTIFICATIONS
+  //===========================================
+
+  async getNotifications(): Promise<any[]> {
+    const rows = await this.getAll('notifications');
+
+    return rows.map(item => ({
+      id: item.id,
+      title: item.title,
+      message: item.message ?? '',
+      type: item.type ?? 'info',
+      read: item.read ?? false,
+      linkTab: item.link_tab ?? '',
+      actionData: item.action_data ?? {},
+      createdAt: item.created_at
+    }));
+  }
+
+  async saveNotification(notification: any): Promise<void> {
+    await this.save('notifications', {
+      id: notification.id,
+      title: notification.title,
+      message: notification.message ?? '',
+      type: notification.type ?? 'info',
+      read: notification.read ?? false,
+      link_tab: notification.linkTab ?? '',
+      action_data: notification.actionData ?? {},
+      created_at: notification.createdAt
+    });
+  }
 }

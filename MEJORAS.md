@@ -61,6 +61,29 @@
 - **Arquitectura de IA Híbrida (Offline & Cloud)**:
   - Integración mediante API Key opcional (Gemini, OpenAI, DeepSeek) o ejecución local (Ollama/WebLLM). Si no hay conexión o no hay API Key configurada, la aplicación sigue funcionando al 100% de manera offline sin bloquearse. (Crear un modelo e integrarlo)
 
+### G. Módulo de Centro de Notificaciones Multicanal (Campanita & Historial)
+- **Campanita e Indicador Neón Badge en la Cabecera**:
+  - Icono de notificación interactivo con contador vivo (ej. `🔴 3`) para avisos urgentes.
+- **Alertas Locales Automáticas**:
+  - Alerta de pedidos próximos a entregar (`deliveryAt` a menos de 30/60 minutos).
+  - Alerta de stock crítico de insumos por debajo del mínimo recomendado.
+  - Alerta de pedidos pendientes demorados en el tablero FIFO (>30 min sin atender).
+- **Integración con Canales de Mensajería (WhatsApp, Instagram, Facebook, Email)**:
+  - Notificación instantánea cuando ingrese una solicitud o mensaje de pedido por WhatsApp Business o redes sociales.
+  - Botón de acción rápida *"Crear Pedido"* para convertir el mensaje en un pedido registrado con 1 solo clic.
+- **Historial Completo de Notificaciones**:
+  - Panel y vista dedicada para revisar notificaciones pasadas con filtros por tipo (`Todos`, `Entregas`, `Stock`, `Mensajes`).
+
+### H. Módulo de Control de Insumos & Recetario (Escandallos / Control de Stock)
+- **Catálogo de Materias Primas e Insumos**:
+  - Registro de insumos (ej: *Mantequilla (g)*, *Harina (g)*, *Cajas (unid)*) con `stockActual`, `stockMinimo` y `costoPorUnidad`.
+- **Vínculo de Receta por Producto (BOM / Bill of Materials)**:
+  - Configuración de ingredientes e insumos necesarios para preparar cada plato o caja del catálogo.
+- **Descuento Automático de Inventario**:
+  - Descuento automático del stock de insumos al registrar o completar un pedido.
+- **Auto-generación de Lista de Compras en Notas**:
+  - Alerta instantánea en el Centro de Notificaciones cuando un insumo esté por agotarse, con botón para incluirlo automáticamente en la lista de compras de *Notas y Tareas*.
+
 ---
 
 ## 3. Mejoras de Arquitectura y Rendimiento (Offline-First)
@@ -86,17 +109,19 @@
 
 | # | Mejora | Complejidad | Impacto | Prioridad |
 |---|---|---|---|---|
-| 1 | Generación de Ticket / Comanda para Impresora o WhatsApp | Media | Alto | 🚀 Alta |
-| 2 | Enlace directo a WhatsApp en directorio de clientes (`wa.me`) | Baja | Alto | 🚀 Alta |
-| 3 | Atajos de Teclado Globales (`Ctrl+N`, `Ctrl+K`, `Ctrl+L`) | Baja | Medio | 🟢 Media |
-| 4 | Control de Stock / Inventario Mínimo en Productos | Media | Alto | 🚀 Alta |
-| 5 | Asistente de Redacción para WhatsApp y Mensajes de Fidelización | Media | Alto | 🚀 Alta |
-| 6 | Asistente de Costos y Sugerencia de Precios / Descripciones | Media | Medio | 🟢 Media |
-| 7 | Predicción de Demanda y Auto-lista de Compras en Notas | Alta | Alto | 🟢 Media |
-| 8 | Escaneo de Facturas/Recibos de Gastos (OCR con IA) | Alta | Alto | 🟢 Media |
-| 9 | Gráfico Comparativo Mensual en Dashboard (Chart.js) | Media | Medio | 🟢 Media |
-| 10 | Índices secundarios en IndexedDB (`db.ts`) | Baja | Alto (Largo Plazo) | 🟢 Media |
-| 11 | Copia de seguridad automática diaria en JSON | Baja | Medio | 🟡 Deseable |
+| 1 | Centro de Notificaciones (Campanita Header + Historial) | Media | Alto | 🚀 Alta |
+| 2 | Control de Stock de Insumos & Recetario (Escandallos / BOM) | Alta | Alto | 🚀 Alta |
+| 3 | Generación de Ticket / Comanda para Impresora o WhatsApp | Media | Alto | 🚀 Alta |
+| 4 | Enlace directo a WhatsApp en directorio de clientes (`wa.me`) | Baja | Alto | 🚀 Alta |
+| 5 | Atajos de Teclado Globales (`Ctrl+N`, `Ctrl+K`, `Ctrl+L`) | Baja | Medio | 🟢 Media |
+| 6 | Integración de Notificaciones de Mensajería (WhatsApp/Meta Webhooks) | Alta | Alto | 🟢 Media |
+| 7 | Asistente de Redacción para WhatsApp y Mensajes de Fidelización | Media | Alto | 🚀 Alta |
+| 8 | Asistente de Costos y Sugerencia de Precios / Descripciones | Media | Medio | 🟢 Media |
+| 9 | Predicción de Demanda y Auto-lista de Compras en Notas | Alta | Alto | 🟢 Media |
+| 10 | Escaneo de Facturas/Recibos de Gastos (OCR con IA) | Alta | Alto | 🟢 Media |
+| 11 | Gráfico Comparativo Mensual en Dashboard (Chart.js) | Media | Medio | 🟢 Media |
+| 12 | Índices secundarios en IndexedDB (`db.ts`) | Baja | Alto (Largo Plazo) | 🟢 Media |
+| 13 | Copia de seguridad automática diaria en JSON | Baja | Medio | 🟡 Deseable |
 
 ---
 

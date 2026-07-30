@@ -85,6 +85,31 @@ CREATE TABLE IF NOT EXISTS public.notes (
     deleted BOOLEAN DEFAULT FALSE
 );
 
+-- 7. TABLA DE INSUMOS Y MATERIA PRIMA (STOCK)
+CREATE TABLE IF NOT EXISTS public.ingredients (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    unit TEXT DEFAULT 'g',
+    current_stock NUMERIC DEFAULT 0,
+    min_stock NUMERIC DEFAULT 0,
+    cost_per_unit NUMERIC DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted BOOLEAN DEFAULT FALSE
+);
+
+-- 8. TABLA DE NOTIFICACIONES Y ALERTAS DE SISTEMA
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    message TEXT DEFAULT '',
+    type TEXT DEFAULT 'info',
+    read BOOLEAN DEFAULT FALSE,
+    link_tab TEXT DEFAULT '',
+    action_data JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================
 -- ÍNDICES DE RENDIMIENTO Y RENDIMIENTO OPTIMIZADO (POSTGRES)
 -- ============================================================
@@ -96,6 +121,8 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 CREATE INDEX IF NOT EXISTS idx_expenses_deleted ON public.expenses(deleted);
 CREATE INDEX IF NOT EXISTS idx_notes_deleted ON public.notes(deleted);
 CREATE INDEX IF NOT EXISTS idx_notes_pinned ON public.notes(is_pinned);
+CREATE INDEX IF NOT EXISTS idx_ingredients_deleted ON public.ingredients(deleted);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON public.notifications(read);
 
 -- ============================================================
 -- HABILITAR ROW LEVEL SECURITY (RLS) Y POLÍTICAS DE ACCESO
@@ -107,6 +134,8 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ingredients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- Crear políticas permisivas para el rol anon de la aplicación
 DROP POLICY IF EXISTS "Permitir todo anon en app_settings" ON public.app_settings;
@@ -126,3 +155,9 @@ CREATE POLICY "Permitir todo anon en expenses" ON public.expenses FOR ALL USING 
 
 DROP POLICY IF EXISTS "Permitir todo anon en notes" ON public.notes;
 CREATE POLICY "Permitir todo anon en notes" ON public.notes FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Permitir todo anon en ingredients" ON public.ingredients;
+CREATE POLICY "Permitir todo anon en ingredients" ON public.ingredients FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Permitir todo anon en notifications" ON public.notifications;
+CREATE POLICY "Permitir todo anon en notifications" ON public.notifications FOR ALL USING (true) WITH CHECK (true);

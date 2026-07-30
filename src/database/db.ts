@@ -1,5 +1,5 @@
 const DB_NAME = 'FoodAdminDB';
-const DB_VERSION = 4; // Incremented version to add notes store
+const DB_VERSION = 5; // Incremented version to add ingredients & notifications stores
 
 let dbInstance: IDBDatabase | null = null;
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -131,6 +131,14 @@ export function openDB(): Promise<IDBDatabase> {
 
       if (!db.objectStoreNames.contains('notes')) {
         db.createObjectStore('notes', { keyPath: 'id' });
+      }
+
+      if (!db.objectStoreNames.contains('ingredients')) {
+        db.createObjectStore('ingredients', { keyPath: 'id' });
+      }
+
+      if (!db.objectStoreNames.contains('notifications')) {
+        db.createObjectStore('notifications', { keyPath: 'id' });
       }
     };
   });

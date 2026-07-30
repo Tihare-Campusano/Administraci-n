@@ -4,8 +4,10 @@ import { HistoryPage } from './pages/HistoryPage';
 import { CatalogPage } from './pages/CatalogPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { NotesPage } from './pages/NotesPage';
+import { StockPage } from './pages/StockPage';
 import { BackupPage } from './pages/BackupPage';
 import { OrderModal } from './components/OrderModal';
+import { NotificationDropdown } from './components/NotificationDropdown';
 import { ProductRepository } from './repositories/ProductRepository';
 import { CustomerRepository } from './repositories/CustomerRepository';
 import { NoteRepository } from './repositories/NoteRepository';
@@ -21,8 +23,10 @@ const historyPage = new HistoryPage();
 const catalogPage = new CatalogPage();
 const clientsPage = new ClientsPage();
 const notesPage = new NotesPage();
+const stockPage = new StockPage();
 const backupPage = new BackupPage();
 const orderModal = new OrderModal();
+const notificationDropdown = new NotificationDropdown();
 const authLogin = new AuthLogin();
 const securityService = new SecurityService();
 
@@ -62,6 +66,7 @@ function switchTab(tabId: string) {
 
 function loadTabData(tabId: string) {
   updateBadge();
+  notificationDropdown.updateBadge();
   switch (tabId) {
     case 'dashboard':
       dashboardPage.load();
@@ -80,6 +85,9 @@ function loadTabData(tabId: string) {
       break;
     case 'notes':
       notesPage.load();
+      break;
+    case 'stock':
+      stockPage.load();
       break;
     case 'documentation':
       break;
@@ -132,6 +140,8 @@ async function init() {
     catalogPage.init();
     clientsPage.init();
     notesPage.init();
+    stockPage.init();
+    notificationDropdown.init((tab) => switchTab(tab));
     
     // Link quick add client inside order modal
     document.getElementById('link-quick-add-client')?.addEventListener('click', () => {
