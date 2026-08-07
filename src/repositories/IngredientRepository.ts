@@ -7,15 +7,34 @@ export class IngredientRepository {
   private supabaseService = new SupabaseService();
 
   async getAll(): Promise<Ingredient[]> {
+    const local = await this.getLocalAll();
+
     try {
       const remote = await this.supabaseService.getIngredients();
-      for (const item of remote) {
-        await this.saveLocal(item).catch(() => {});
+      if (remote && remote.length > 0) {
+        const localMap = new Map<string, Ingredient>(local.map(i => [i.id, i]));
+
+        for (const item of remote) {
+          const existing = localMap.get(item.id);
+          if (!existing || (item.updatedAt && existing.updatedAt && new Date(item.updatedAt) > new Date(existing.updatedAt))) {
+            await this.saveLocal(item).catch(() => {});
+            localMap.set(item.id, item);
+          }
+        }
+
+        for (const localItem of local) {
+          if (!remote.some(r => r.id === localItem.id)) {
+            this.supabaseService.saveIngredient(localItem).catch(() => {});
+          }
+        }
+
+        return Array.from(localMap.values()).filter(i => !i.deleted);
       }
-      return remote;
     } catch (e) {
-      return this.getLocalAll();
+      console.warn('Sincronización de ingredientes desde Supabase no disponible, usando IndexedDB local:', e);
     }
+
+    return local;
   }
 
   private async getLocalAll(): Promise<Ingredient[]> {
@@ -46,13 +65,16 @@ export class IngredientRepository {
       ingredient.deleted = false;
     }
 
+    // 1. Guardar de forma inmediata en IndexedDB local
+    await this.saveLocal(ingredient).catch(() => {});
+
+    // 2. Sincronizar asincrónicamente con Supabase
     try {
       await this.supabaseService.saveIngredient(ingredient);
     } catch (err) {
       console.warn('Sincronización cloud del ingrediente fallida:', err);
     }
 
-    await this.saveLocal(ingredient).catch(() => {});
     return ingredient;
   }
 
@@ -69,13 +91,15 @@ export class IngredientRepository {
   }
 
   async delete(id: string): Promise<void> {
+    // 1. Marcar/eliminar primero en almacenamiento local
+    await this.deleteLocal(id).catch(() => {});
+
+    // 2. Eliminar en Supabase Cloud
     try {
       await this.supabaseService.deleteRow('ingredients', id);
     } catch (err) {
       console.warn('Eliminación cloud del ingrediente fallida:', err);
     }
-
-    await this.deleteLocal(id).catch(() => {});
   }
 
   private async deleteLocal(id: string): Promise<void> {
