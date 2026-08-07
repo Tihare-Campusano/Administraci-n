@@ -175,11 +175,8 @@ async function init() {
       // Si la contraseña está configurada y la seguridad activa, solicitar inicio de sesión
       securityService.lockSession();
       authLogin.show('lock');
-    } else if (!hasPassword && isEnabled) {
-      // Si no hay contraseña creada, solicitar crear una
-      authLogin.show('setup');
     } else {
-      // Si la seguridad fue desactivada por el usuario
+      // Si no hay contraseña o la seguridad está desactivada, iniciar sesión normalmente
       securityService.setAuthenticatedSession(true);
     }
 

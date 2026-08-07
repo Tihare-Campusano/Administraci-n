@@ -12,7 +12,7 @@ export class SecurityService {
   async isSecurityEnabled(): Promise<boolean> {
     const enabled = await this.repository.getVal<boolean>(this.ENABLED_KEY);
     if (enabled !== undefined) return enabled;
-    return true;
+    return false;
   }
 
   async hasPasswordSet(): Promise<boolean> {

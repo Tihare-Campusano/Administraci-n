@@ -92,12 +92,6 @@ export class AuthLogin {
       if (groupConfirm) groupConfirm.style.display = 'flex';
 
       if (cancelBtn) cancelBtn.style.display = 'inline-block';
-      
-      // Si no existe ninguna contraseña creada aun, no permitir cancelar (es obligatoria)
-      const hasPassword = await this.securityService.hasPasswordSet();
-      if (!hasPassword && cancelBtn) {
-        cancelBtn.style.display = 'none';
-      }
     } else if (mode === 'change') {
       title.textContent = 'Cambiar Contraseña';
       if (subtitle) subtitle.textContent = 'Ingresa tu contraseña actual y la nueva contraseña que deseas usar.';
