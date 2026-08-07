@@ -12,7 +12,10 @@ export class SecurityService {
   async isSecurityEnabled(): Promise<boolean> {
     const enabled = await this.repository.getVal<boolean>(this.ENABLED_KEY);
     if (enabled !== undefined) return enabled;
-    return false;
+    
+    // Si existe una contraseña guardada, la seguridad debe estar activa por defecto
+    const localHash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
+    return !!localHash;
   }
 
   async hasPasswordSet(): Promise<boolean> {
@@ -58,6 +61,25 @@ export class SecurityService {
     return (hash >>> 0).toString(16);
   }
 
+  private async hashPasswordUnsalted(password: string): Promise<string> {
+    const cryptoObj = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined;
+    if (cryptoObj && cryptoObj.subtle) {
+      try {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await cryptoObj.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      } catch (err) {}
+    }
+    let hash = 2166136261;
+    for (let i = 0; i < password.length; i++) {
+      hash ^= password.charCodeAt(i);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    return (hash >>> 0).toString(16);
+  }
+
   async setPassword(password: string): Promise<void> {
     if (!password || password.trim().length === 0) {
       throw new Error('La contraseña no puede estar vacía.');
@@ -79,7 +101,8 @@ export class SecurityService {
 
   async validatePassword(password: string): Promise<boolean> {
     if (!password || !password.trim()) return false;
-    const inputHash = await this.hashPassword(password.trim());
+    const cleanPass = password.trim();
+    const inputHash = await this.hashPassword(cleanPass);
     
     // 1. Buscar primero en IndexedDB
     let savedHash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
@@ -90,14 +113,34 @@ export class SecurityService {
         savedHash = await this.supabaseService.getSetting(this.PASSWORD_HASH_KEY);
         if (savedHash) {
           await this.repository.setVal(this.PASSWORD_HASH_KEY, savedHash);
+          await this.repository.setVal(this.ENABLED_KEY, true);
         }
       } catch (e) {}
     }
 
-    if (savedHash && savedHash === inputHash) {
+    if (!savedHash) return false;
+
+    // a) Coincidencia con Hash salted (formato actual)
+    if (savedHash === inputHash) {
       SecurityService.isAuthenticated = true;
       return true;
     }
+
+    // b) Coincidencia con Hash sin sal (formato legacy)
+    const unsaltedHash = await this.hashPasswordUnsalted(cleanPass);
+    if (savedHash === unsaltedHash) {
+      await this.setPassword(cleanPass);
+      SecurityService.isAuthenticated = true;
+      return true;
+    }
+
+    // c) Coincidencia con texto plano (formato legacy)
+    if (savedHash === cleanPass) {
+      await this.setPassword(cleanPass);
+      SecurityService.isAuthenticated = true;
+      return true;
+    }
+
     return false;
   }
 
