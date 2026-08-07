@@ -16,21 +16,25 @@ export class SecurityService {
   }
 
   async hasPasswordSet(): Promise<boolean> {
+    // 1. Priorizar IndexedDB como fuente de verdad local
+    const localHash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
+    if (localHash) {
+      return true;
+    }
+
+    // 2. Si no existe localmente, verificar Supabase (ej: sincronización en nuevo dispositivo)
     try {
       const remoteHash = await this.supabaseService.getSetting(this.PASSWORD_HASH_KEY);
       if (remoteHash) {
         await this.repository.setVal(this.PASSWORD_HASH_KEY, remoteHash);
         await this.repository.setVal(this.ENABLED_KEY, true);
         return true;
-      } else {
-        // Si Supabase no tiene la clave en app_settings, se elimina la contraseña local obsoleta
-        await this.repository.deleteVal(this.PASSWORD_HASH_KEY);
-        return false;
       }
     } catch (e) {
-      const localHash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
-      return !!localHash;
+      // Ignorar errores de red offline
     }
+
+    return false;
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -60,33 +64,37 @@ export class SecurityService {
     }
     const hash = await this.hashPassword(password.trim());
     
-    // Guardar directamente en Supabase (base de datos primaria)
-    await this.supabaseService.saveSetting(this.PASSWORD_HASH_KEY, hash);
-    
-    // Guardar en cache local
+    // 1. Guardar en IndexedDB (fuente de verdad inmediata)
     await this.repository.setVal(this.PASSWORD_HASH_KEY, hash);
     await this.repository.setVal(this.ENABLED_KEY, true);
-
     SecurityService.isAuthenticated = true;
+
+    // 2. Intentar respaldar en Supabase sin bloquear si falla
+    try {
+      await this.supabaseService.saveSetting(this.PASSWORD_HASH_KEY, hash);
+    } catch (e) {
+      console.warn('No se pudo respaldar la contraseña en Supabase (modo offline):', e);
+    }
   }
 
   async validatePassword(password: string): Promise<boolean> {
+    if (!password || !password.trim()) return false;
     const inputHash = await this.hashPassword(password.trim());
-    let savedHash: string | null = null;
     
-    try {
-      savedHash = await this.supabaseService.getSetting(this.PASSWORD_HASH_KEY);
-    } catch (e) {}
+    // 1. Buscar primero en IndexedDB
+    let savedHash = await this.repository.getVal<string>(this.PASSWORD_HASH_KEY);
 
+    // 2. Si no existe en IndexedDB, intentar obtener de Supabase
     if (!savedHash) {
-      savedHash = (await this.repository.getVal<string>(this.PASSWORD_HASH_KEY)) || null;
+      try {
+        savedHash = await this.supabaseService.getSetting(this.PASSWORD_HASH_KEY);
+        if (savedHash) {
+          await this.repository.setVal(this.PASSWORD_HASH_KEY, savedHash);
+        }
+      } catch (e) {}
     }
 
-    if (!savedHash) {
-      return false;
-    }
-
-    if (savedHash === inputHash) {
+    if (savedHash && savedHash === inputHash) {
       SecurityService.isAuthenticated = true;
       return true;
     }
@@ -96,10 +104,17 @@ export class SecurityService {
   async disableSecurity(currentPassword: string): Promise<boolean> {
     const isValid = await this.validatePassword(currentPassword);
     if (isValid) {
-      await this.supabaseService.deleteSetting(this.PASSWORD_HASH_KEY);
+      // 1. Desactivar localmente en IndexedDB inmediatamente
       await this.repository.setVal(this.ENABLED_KEY, false);
       await this.repository.deleteVal(this.PASSWORD_HASH_KEY);
       SecurityService.isAuthenticated = false;
+
+      // 2. Intentar eliminar de Supabase en segundo plano
+      try {
+        await this.supabaseService.deleteSetting(this.PASSWORD_HASH_KEY);
+      } catch (e) {
+        console.warn('No se pudo eliminar la contraseña en Supabase (modo offline):', e);
+      }
       return true;
     }
     return false;

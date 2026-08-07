@@ -410,7 +410,14 @@ async function testSecurity(runner: TestRunner) {
   const securityRepo = (securityService as any).repository;
 
   // 1. Preservar contraseña original del usuario si existe
-  const originalHash = await supabaseService.getSetting('security_password_hash');
+  const originalLocalHash = await securityRepo.getVal('security_password_hash');
+  const originalEnabled = await securityRepo.getVal('security_enabled');
+  let originalHash = originalLocalHash;
+  if (!originalHash) {
+    try {
+      originalHash = await supabaseService.getSetting('security_password_hash');
+    } catch (e) {}
+  }
 
   const pin = "1234";
 
@@ -466,11 +473,17 @@ async function testSecurity(runner: TestRunner) {
 
   // 2. Restaurar contraseña original del usuario tras finalizar el test
   if (originalHash) {
-    await supabaseService.saveSetting('security_password_hash', originalHash);
     await securityRepo.setVal('security_password_hash', originalHash);
+    await securityRepo.setVal('security_enabled', originalEnabled !== undefined ? originalEnabled : true);
+    try { await supabaseService.saveSetting('security_password_hash', originalHash); } catch(e) {}
   } else {
-    await supabaseService.deleteSetting('security_password_hash');
     await securityRepo.deleteVal('security_password_hash');
+    if (originalEnabled !== undefined) {
+      await securityRepo.setVal('security_enabled', originalEnabled);
+    } else {
+      await securityRepo.deleteVal('security_enabled');
+    }
+    try { await supabaseService.deleteSetting('security_password_hash'); } catch(e) {}
   }
 
   console.log("");
