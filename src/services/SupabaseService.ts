@@ -32,6 +32,25 @@ export class SupabaseService {
     return SupabaseService.instance;
   }
 
+  public subscribeToRealtime(callback: (table: string, eventType: string, payload: any) => void) {
+    const client = this.getClient();
+    const channel = client
+      .channel('public-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public' },
+        (payload) => {
+          Logger.info('realtime', 'CHANGE_RECEIVED', { table: payload.table, eventType: payload.eventType });
+          callback(payload.table, payload.eventType, payload);
+        }
+      )
+      .subscribe((status) => {
+        Logger.info('realtime', 'SUBSCRIPTION_STATUS', { status });
+      });
+
+    return channel;
+  }
+
   //===========================================
   // MÉTODOS GENÉRICOS
   //===========================================

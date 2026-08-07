@@ -12,10 +12,10 @@ export class CustomerRepository {
       for (const item of remote) {
         await this.saveLocal(item).catch(() => {});
       }
+      return remote;
     } catch (e) {
-      // Ignorar fallos de red en sync remoto
+      return this.getLocalAll();
     }
-    return this.getLocalAll();
   }
 
   private async getLocalAll(): Promise<Customer[]> {
@@ -48,17 +48,14 @@ export class CustomerRepository {
     if (customer.deleted === undefined) {
       customer.deleted = false;
     }
-    
-    // 1. Guardar primero en IndexedDB
-    await this.saveLocal(customer);
 
-    // 2. Intentar sincronizar con la nube de forma asíncrona no bloqueante
     try {
       await this.supabaseService.saveCustomer(customer);
     } catch (err) {
-      console.warn('Sincronización cloud del cliente fallida u offline:', err);
+      console.warn('Sincronización cloud del cliente fallida:', err);
     }
 
+    await this.saveLocal(customer).catch(() => {});
     return customer;
   }
 
@@ -75,15 +72,13 @@ export class CustomerRepository {
   }
 
   async delete(id: string): Promise<void> {
-    // 1. Eliminar primero de IndexedDB local
-    await this.deleteLocal(id);
-
-    // 2. Intentar eliminar en la nube de forma asíncrona no bloqueante
     try {
       await this.supabaseService.deleteRow('customers', id);
     } catch (err) {
-      console.warn('Eliminación cloud del cliente fallida u offline:', err);
+      console.warn('Eliminación cloud del cliente fallida:', err);
     }
+
+    await this.deleteLocal(id).catch(() => {});
   }
 
   private async deleteLocal(id: string): Promise<void> {

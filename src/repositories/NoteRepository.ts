@@ -12,10 +12,11 @@ export class NoteRepository {
       for (const item of remote) {
         await this.saveLocal(item).catch(() => {});
       }
+      return remote;
     } catch (e) {
-      // Ignorar fallos de red en sync remoto
+      // Fallback a IndexedDB solo en fallo de red
+      return this.getLocalAll();
     }
-    return this.getLocalAll();
   }
 
   private async getLocalAll(): Promise<Note[]> {
@@ -49,15 +50,15 @@ export class NoteRepository {
       note.deleted = false;
     }
 
-    // 1. Guardar primero en IndexedDB (Fuente de verdad local inmediata)
-    await this.saveLocal(note);
-
-    // 2. Intentar sincronizar con la nube de forma asíncrona no bloqueante
+    // 1. Guardar prioritariamente en Supabase Cloud
     try {
       await this.supabaseService.saveNote(note);
     } catch (err) {
-      console.warn('Sincronización cloud de la nota fallida u offline:', err);
+      console.warn('Sincronización cloud de la nota fallida:', err);
     }
+
+    // 2. Guardar también en caché local
+    await this.saveLocal(note).catch(() => {});
 
     return note;
   }
@@ -75,15 +76,15 @@ export class NoteRepository {
   }
 
   async delete(id: string): Promise<void> {
-    // 1. Eliminar primero de IndexedDB local
-    await this.deleteLocal(id);
-
-    // 2. Intentar eliminar en la nube de forma asíncrona no bloqueante
+    // 1. Eliminar en Supabase Cloud
     try {
       await this.supabaseService.deleteRow('notes', id);
     } catch (err) {
-      console.warn('Eliminación cloud de la nota fallida u offline:', err);
+      console.warn('Eliminación cloud de la nota fallida:', err);
     }
+
+    // 2. Eliminar de la caché local
+    await this.deleteLocal(id).catch(() => {});
   }
 
   private async deleteLocal(id: string): Promise<void> {

@@ -12,10 +12,10 @@ export class ProductRepository {
       for (const item of remote) {
         await this.saveLocal(item).catch(() => {});
       }
+      return remote;
     } catch (e) {
-      // Ignorar fallos de red en sync remoto
+      return this.getLocalAll();
     }
-    return this.getLocalAll();
   }
 
   private async getLocalAll(): Promise<Product[]> {
@@ -49,16 +49,13 @@ export class ProductRepository {
       product.deleted = false;
     }
 
-    // 1. Guardar primero en IndexedDB
-    await this.saveLocal(product);
-
-    // 2. Intentar sincronizar con la nube de forma asíncrona no bloqueante
     try {
       await this.supabaseService.saveProduct(product);
     } catch (err) {
-      console.warn('Sincronización cloud del producto fallida u offline:', err);
+      console.warn('Sincronización cloud del producto fallida:', err);
     }
 
+    await this.saveLocal(product).catch(() => {});
     return product;
   }
 
@@ -75,15 +72,13 @@ export class ProductRepository {
   }
 
   async delete(id: string): Promise<void> {
-    // 1. Eliminar primero de IndexedDB local
-    await this.deleteLocal(id);
-
-    // 2. Intentar eliminar en la nube de forma asíncrona no bloqueante
     try {
       await this.supabaseService.deleteRow('products', id);
     } catch (err) {
-      console.warn('Eliminación cloud del producto fallida u offline:', err);
+      console.warn('Eliminación cloud del producto fallida:', err);
     }
+
+    await this.deleteLocal(id).catch(() => {});
   }
 
   private async deleteLocal(id: string): Promise<void> {

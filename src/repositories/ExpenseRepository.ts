@@ -12,10 +12,10 @@ export class ExpenseRepository {
       for (const item of remote) {
         await this.saveLocal(item).catch(() => {});
       }
+      return remote;
     } catch (e) {
-      // Ignorar fallos de red en sync remoto
+      return this.getLocalAll();
     }
-    return this.getLocalAll();
   }
 
   private async getLocalAll(): Promise<Expense[]> {
@@ -53,16 +53,13 @@ export class ExpenseRepository {
       expense.deleted = false;
     }
 
-    // 1. Guardar primero en IndexedDB
-    await this.saveLocal(expense);
-
-    // 2. Sincronización asíncrona no bloqueante a la nube
     try {
       await this.supabaseService.saveExpense(expense);
     } catch (err) {
-      console.warn('Sincronización cloud del gasto fallida u offline:', err);
+      console.warn('Sincronización cloud del gasto fallida:', err);
     }
 
+    await this.saveLocal(expense).catch(() => {});
     return expense;
   }
 
@@ -79,15 +76,13 @@ export class ExpenseRepository {
   }
 
   async delete(id: string): Promise<void> {
-    // 1. Eliminar primero de IndexedDB local
-    await this.deleteLocal(id);
-
-    // 2. Sincronización asíncrona no bloqueante a la nube
     try {
       await this.supabaseService.deleteRow('expenses', id);
     } catch (err) {
-      console.warn('Eliminación cloud del gasto fallida u offline:', err);
+      console.warn('Eliminación cloud del gasto fallida:', err);
     }
+
+    await this.deleteLocal(id).catch(() => {});
   }
 
   private async deleteLocal(id: string): Promise<void> {

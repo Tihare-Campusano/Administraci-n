@@ -16,6 +16,7 @@ import { OrderRepository } from './repositories/OrderRepository';
 import { showToast } from './components/Toast';
 import { AuthLogin } from './components/AuthLogin';
 import { SecurityService } from './services/SecurityService';
+import { CloudSyncService } from './services/CloudSyncService';
 
 // Global Instances
 const dashboardPage = new DashboardPage();
@@ -31,6 +32,7 @@ const orderModal = new OrderModal();
 const notificationDropdown = new NotificationDropdown();
 const authLogin = new AuthLogin();
 const securityService = new SecurityService();
+const cloudSyncService = new CloudSyncService();
 
 const orderRepository = new OrderRepository();
 const productRepository = new ProductRepository();
@@ -134,6 +136,25 @@ async function cleanupOldSeedData() {
   }
 }
 
+function setupCloudRealtimeSync() {
+  cloudSyncService.init((table) => {
+    console.log(`[CloudSync] Cambio detectado en tabla: ${table}. Actualizando vista activa: ${currentTab}`);
+    loadTabData(currentTab);
+  });
+
+  window.addEventListener('foodadmin-cloud-change', (e: any) => {
+    const table = e.detail?.table;
+    if (table) {
+      console.log(`[CloudSync] Evento cloud recibido para tabla: ${table}`);
+    }
+    loadTabData(currentTab);
+  });
+
+  window.addEventListener('foodadmin-cloud-sync', () => {
+    loadTabData(currentTab);
+  });
+}
+
 async function init() {
   try {
     await cleanupOldSeedData();
@@ -181,6 +202,7 @@ async function init() {
     }
 
     setupTabNavigation();
+    setupCloudRealtimeSync();
     loadTabData('dashboard');
   } catch (err) {
     showToast('Fallo al iniciar base de datos', 'danger');

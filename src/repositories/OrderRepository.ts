@@ -12,10 +12,10 @@ export class OrderRepository {
       for (const item of remote) {
         await this.saveLocal(item).catch(() => {});
       }
+      return remote;
     } catch (e) {
-      // Ignorar fallos de red en sync remoto
+      return this.getLocalAll();
     }
-    return this.getLocalAll();
   }
 
   private async getLocalAll(): Promise<Order[]> {
@@ -49,16 +49,13 @@ export class OrderRepository {
       order.deleted = false;
     }
 
-    // 1. Guardar primero en IndexedDB
-    await this.saveLocal(order);
-
-    // 2. Intentar sincronizar con la nube de forma asíncrona no bloqueante
     try {
       await this.supabaseService.saveOrder(order);
     } catch (err) {
-      console.warn('Sincronización cloud del pedido fallida u offline:', err);
+      console.warn('Sincronización cloud del pedido fallida:', err);
     }
 
+    await this.saveLocal(order).catch(() => {});
     return order;
   }
 
@@ -75,15 +72,13 @@ export class OrderRepository {
   }
 
   async delete(id: string): Promise<void> {
-    // 1. Eliminar primero de IndexedDB local
-    await this.deleteLocal(id);
-
-    // 2. Intentar eliminar en la nube de forma asíncrona no bloqueante
     try {
       await this.supabaseService.deleteRow('orders', id);
     } catch (err) {
-      console.warn('Eliminación cloud del pedido fallida u offline:', err);
+      console.warn('Eliminación cloud del pedido fallida:', err);
     }
+
+    await this.deleteLocal(id).catch(() => {});
   }
 
   private async deleteLocal(id: string): Promise<void> {
